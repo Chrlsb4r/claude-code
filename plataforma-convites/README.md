@@ -25,4 +25,6 @@ npm test             # unitários + integração do banco (cria convites_test de
 O shim (`supabase/local/00_supabase_shim.sql`) existe só para testes locais. Nunca o aplique em um projeto Supabase.
 
 ## Scripts
-`dev` · `build` · `start` · `lint` · `typecheck` · `test` · `test:unit` · `db:reset`
+`dev` · `build` · `start` · `lint` · `typecheck` · `test` · `test:unit` · `test:e2e` · `db:reset`
+
+Para rodar a loja sem um projeto Supabase, crie `.env.local` com `LOCAL_PG_URL=postgres://postgres:postgres@127.0.0.1:5432/convites_dev` (somente localhost) depois de `npm run db:reset`. O E2E (`npm run test:e2e`) roda contra o build de produção (`npm run build` antes).

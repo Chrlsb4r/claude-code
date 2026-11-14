@@ -44,6 +44,7 @@ Supabase: Postgres + Auth (MFA p/ admin) + Storage (uploads privados) + Realtime
 | server-only | 0.0.1 | MIT | Impede importar segredos no navegador |
 | vitest | 4.1.12 | MIT | Testes unitários e de banco |
 | @playwright/test | 1.63.0 | Apache-2.0 | E2E (mesma versão do Chromium instalado) |
+| @axe-core/playwright | 4.11.0 | MPL-2.0 | Auditoria automática de acessibilidade nos E2E (só desenvolvimento, sem modificações) |
 | pg | 8.x | MIT | Testes de integração do banco |
 
 Planejadas para as próximas fases: `shadcn/ui` (componentes copiados para o projeto, MIT; Fase 2), `@sentry/nextjs` (MIT; Fase 7), `supabase` CLI (MIT; deploy das migrations).
@@ -84,14 +85,19 @@ Regras de negócio no banco:
 | Fase | Entregas | Estado |
 |---|---|---|
 | 1. Fundação | Inspeção, projeto isolado, arquitetura, schema + RLS + funções, design system, testes de banco | **Concluída** |
-| 2. Loja | Home completa, catálogo com filtros (ocasião, tema, estilo, preço, recursos), busca, página do modelo com demo fictícia | Próxima |
-| 3. Personalização | Auth (Supabase), editor mobile-first por etapas, prévia em tempo real com marca d'água, autosave de rascunho, uploads validados (Storage privado) | |
+| 2. Loja | Home completa, catálogo com filtros (ocasião, tema, estilo, preço, recursos), busca, páginas de ocasião, página do modelo com demo fictícia | **Concluída** |
+| 3. Personalização (próxima) | Auth (Supabase), editor mobile-first por etapas, prévia em tempo real com marca d'água, autosave de rascunho, uploads validados (Storage privado) | |
 | 4. Comercialização | Checkout Mercado Pago (Pix + cartão), webhook com assinatura verificada + consulta à API, publicação automática, CSP com nonce | Requer credenciais de teste |
 | 5. Eventos | Página `/c/[slug]`, RSVP público e individual, anti-bot (Turnstile ou equivalente), página de encerrado | |
 | 6. Dashboards | Painel do comprador (Realtime, CSV, histórico), painel admin (templates versionados, pedidos, cupons, auditoria) | |
 | 7. Qualidade | E2E Playwright (cenários 1–20, desktop e mobile), auditoria de dependências, acessibilidade WCAG 2.2 AA, Sentry, LGPD (documentos para revisão jurídica), backup/restauração testados | |
 
 ## 6. Decisões e pendências conhecidas
+
+- **Leitura do catálogo por funções SQL** (`supabase/migrations/20261114000002_catalogo.sql`, `SECURITY INVOKER`): a lógica de busca/filtros fica no banco e roda com o papel `anon`, então as políticas RLS valem igualmente em produção e em desenvolvimento. O adaptador `src/lib/db/public-rpc.ts` chama a função via Supabase (`.rpc`) ou, em dev/E2E sem Supabase, via Postgres local (`LOCAL_PG_URL`, aceito só para localhost) com `set local role anon`.
+- **Cache:** páginas públicas são pré-renderizadas (Cache Components) com `cacheLife('hours')` e a tag `catalogo`; o painel admin (Fase 6) chamará `revalidateTag('catalogo')` ao publicar modelos. Busca/filtros usam partial prerender: casca estática + resultados por requisição (também cacheados por combinação de filtros).
+- **404 de modelo inexistente:** na primeira renderização sob demanda o Next responde `200` com `<meta name="robots" content="noindex">` (streaming; ver docs do Next em `loading.md > Status codes`); depois que a página é salva, responde `404`. Um 404 imediato exigiria consultar o banco no proxy a cada requisição, o que a documentação desaconselha.
+- **Capas dos modelos** são o próprio convite renderizado com dados fictícios (sem imagens a carregar). A marca d'água "PRÉVIA" fica reservada para a prévia do conteúdo do cliente antes do pagamento.
 
 - **Netlify:** compatível com Next 16 via adaptador OpenNext da Netlify. Validar na Fase 7 (Cache Components e `proxy.ts`) antes do primeiro deploy.
 - **Rate limit** do RSVP está no banco (20 por hora por cliente e evento). O hash do cliente é calculado no servidor com segredo (`VISITOR_HASH_SECRET`), sem guardar IP. Na Fase 5 entra também um desafio anti-bot.

@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
-    "db:reset": "bash supabase/local/reset.sh"
+    "db:reset": "bash supabase/local/reset.sh",
+    "test:e2e": "playwright test --trace off"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
@@ -27,6 +28,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",

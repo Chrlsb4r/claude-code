@@ -28,16 +28,30 @@ begin
   for rec in
     select * from (values
       ('jardim-encantado', 'Jardim Encantado', 'aniversario-infantil', 'floral', 'Delicado', 4900, true,
-       'Convite com ilustrações botânicas suaves e confirmação de presença integrada.'),
+       'Ilustrações botânicas suaves e confirmação de presença integrada.', 'botanico', array['rsvp','mapa','contagem_regressiva']),
       ('papel-fino', 'Papel Fino', 'casamento', 'classico', 'Editorial', 8900, true,
-       'Tipografia serifada, margens generosas e programação de cerimônia e recepção.'),
+       'Tipografia serifada, margens generosas e programação de cerimônia e recepção.', 'editorial', array['rsvp','mapa','links_individuais','lista_de_presentes','contagem_regressiva']),
       ('lua-de-algodao', 'Lua de Algodão', 'cha-de-bebe', 'minimalista', 'Suave', 5900, true,
-       'Tons pastel, lua e estrelas para um chá de bebê acolhedor.'),
+       'Tons pastel, lua e estrelas para um chá de bebê acolhedor.', 'celeste', array['rsvp','mapa','lista_de_presentes']),
       ('caixa-surpresa', 'Caixa Surpresa', 'cha-revelacao', 'ludico', 'Vibrante', 5900, false,
-       'Confete e contraste para o grande momento da revelação.'),
-      ('noite-de-gala', 'Noite de Gala', '15-anos', 'noturno', 'Sofisticado', 7900, false,
-       'Fundo profundo, detalhes champagne e contagem regressiva.')
-    ) as x(slug, name, cat, theme, style, price, featured, descr)
+       'Confete e contraste para o grande momento da revelação.', 'confete', array['rsvp','mapa','contagem_regressiva']),
+      ('noite-de-gala', 'Noite de Gala', '15-anos', 'noturno', 'Sofisticado', 7900, true,
+       'Fundo profundo, detalhes champagne e contagem regressiva.', 'gala', array['rsvp','mapa','links_individuais','contagem_regressiva']),
+      ('linho-e-salvia', 'Linho & Sálvia', 'casamento', 'floral', 'Delicado', 9900, false,
+       'Folhagens em sálvia e papel de linho para celebrações ao ar livre.', 'botanico', array['rsvp','mapa','links_individuais','lista_de_presentes']),
+      ('brinde-de-ouro', 'Brinde de Ouro', 'aniversario-adulto', 'classico', 'Elegante', 5900, false,
+       'Detalhes dourados e composição centrada para aniversários marcantes.', 'editorial', array['rsvp','mapa']),
+      ('luz-serena', 'Luz Serena', 'batizado', 'minimalista', 'Suave', 4900, false,
+       'Composição leve e serena para um batizado em família.', 'celeste', array['rsvp','mapa']),
+      ('capelo', 'Capelo', 'formatura', 'noturno', 'Sofisticado', 6900, false,
+       'Visual noturno com acentos champagne para colações e bailes.', 'gala', array['rsvp','mapa','links_individuais']),
+      ('agenda-executiva', 'Agenda Executiva', 'corporativo', 'minimalista', 'Editorial', 12900, false,
+       'Grade limpa com programação e orientações de participação.', 'minimal', array['rsvp','mapa','links_individuais','programacao']),
+      ('ceia-em-familia', 'Ceia em Família', 'datas-comemorativas', 'classico', 'Acolhedor', 3900, false,
+       'Para ceias, confraternizações e datas especiais.', 'editorial', array['rsvp','mapa']),
+      ('encontro-livre', 'Encontro Livre', 'outros', 'minimalista', 'Moderno', 3900, false,
+       'Um convite versátil para qualquer ocasião.', 'minimal', array['rsvp'])
+    ) as x(slug, name, cat, theme, style, price, featured, descr, variant, feats)
   loop
     insert into public.templates (slug, name, description, category_id, theme_id, style, status, is_featured)
     values (rec.slug, rec.name, rec.descr,
@@ -50,9 +64,9 @@ begin
 
     insert into public.template_versions (template_id, version, price_cents, layout, style_options, features)
     values (t_id, 1, rec.price,
-            jsonb_build_object('component', rec.slug),
+            jsonb_build_object('variant', rec.variant),
             '{"palettes":["champagne","salvia","rose"],"fonts":["cormorant","inter"]}',
-            array['rsvp', 'mapa', 'contagem_regressiva', 'links_individuais'])
+            rec.feats)
     returning id into v_id;
 
     insert into public.template_fields (template_version_id, key, type, label, step, required, max_length, options, sort_order) values
