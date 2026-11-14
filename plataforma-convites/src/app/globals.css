@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+/* =========================================================
+   Tokens de design — identidade "papelaria fina"
+   Cores de marca: off-white, champagne, grafite, sálvia, rosé.
+   Champagne/sálvia/rosé claros são decorativos (fundos, bordas);
+   para texto usamos as variantes "-ink", com contraste AA sobre o off-white.
+   ========================================================= */
+:root {
+  --paper: #f8f6f2;
+  --paper-raised: #fffdf9;
+  --champagne: #d6c4a8;
+  --champagne-ink: #7a6646;
+  --graphite: #252525;
+  --graphite-soft: #5c5a56;
+  --sage: #a6b3a2;
+  --sage-ink: #4f5e4c;
+  --rose: #e8d8d8;
+  --rose-ink: #8a5a5a;
+  --line: #e7e1d7;
+  --danger: #a33a2c;
+  --success: #3f6b47;
+  --focus: #7a6646;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-soft: 0 1px 2px rgb(37 37 37 / 0.04), 0 8px 24px -12px rgb(37 37 37 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(37 37 37 / 0.05), 0 24px 48px -24px rgb(37 37 37 / 0.22);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-champagne: var(--champagne);
+  --color-champagne-ink: var(--champagne-ink);
+  --color-graphite: var(--graphite);
+  --color-graphite-soft: var(--graphite-soft);
+  --color-sage: var(--sage);
+  --color-sage-ink: var(--sage-ink);
+  --color-rose: var(--rose);
+  --color-rose-ink: var(--rose-ink);
+  --color-line: var(--line);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-serif: var(--font-display);
+  --font-sans: var(--font-body);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lift: var(--shadow-lift);
+  --ease-premium: var(--ease);
+}
+
+html {
+  background: var(--paper);
+  color: var(--graphite);
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--graphite);
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+::selection {
+  background: var(--rose);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
