@@ -111,3 +111,24 @@ test("personagens acenam em loop e param com 'reduzir movimento'", async ({ brow
   expect(iter).toBe("1");
   await calm.close();
 });
+
+test("convidado abre o envelope, vê a contagem e confirma presença com comemoração", async ({ page }) => {
+  await page.goto("/modelos/dino-aventura");
+  await page.getByRole("link", { name: "Ver como o convidado recebe" }).click();
+  await expect(page.getByRole("dialog", { name: "Você recebeu um convite" })).toBeVisible();
+  await page.getByRole("button", { name: "Abrir convite" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("timer")).not.toContainText("--");
+  const form = page.getByRole("form", { name: "Confirmar presença" });
+  await form.getByRole("button", { name: "Confirmar resposta" }).click();
+  await expect(form.getByRole("alert")).toHaveText("Escreva seu nome para confirmar.");
+  await form.getByLabel("Seu nome").fill("Marina Souza");
+  await form.getByRole("button", { name: "Eu vou!" }).click();
+  await form.getByRole("button", { name: "Mais um acompanhante" }).click();
+  await form.getByRole("button", { name: "Confirmar resposta" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Oba, Marina!" })).toBeVisible();
+  await expect(page.getByText("Presença confirmada para você e mais 1.")).toBeVisible();
+  await expect(page.getByText("Demonstração: nenhuma resposta foi enviada.")).toBeVisible();
+  await noHorizontalScroll(page);
+  await noA11yViolations(page);
+});

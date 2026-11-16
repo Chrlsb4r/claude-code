@@ -122,7 +122,10 @@ export default async function TemplatePage({ params }: PageProps<"/modelos/[slug
               <p className="text-right text-xs text-ink-soft">Pix ou cartão<br />Válido até 24h após o evento</p>
             </div>
 
-            <Link href={`/personalizar/${t.slug}`} className={buttonClasses("primary", "lg", "w-full")}>Personalizar agora</Link>
+            <div className="flex flex-col gap-3">
+              <Link href={`/personalizar/${t.slug}`} className={buttonClasses("primary", "lg", "w-full")}>Personalizar agora</Link>
+              <Link href={`/modelos/${t.slug}/convidado`} className={buttonClasses("secondary", "lg", "w-full")}>Ver como o convidado recebe</Link>
+            </div>
 
             <div className="flex flex-col gap-3">
               <h2 className="text-sm font-medium">Recursos incluídos</h2>
