@@ -174,6 +174,46 @@ body {
 .anim-burst { animation: burst 1.6s cubic-bezier(0.15, 0.7, 0.3, 1) forwards; }
 .anim-heart { animation: heart-pop 0.7s var(--ease) both; }
 
+
+/* ---------- Efeitos premium (convite do convidado e tema Embarque) ---------- */
+@keyframes fly {
+  0% { transform: translate(-12cqw, 64cqw) rotate(-28deg); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translate(44cqw, 20cqw) rotate(-4deg); }
+  90% { opacity: 1; }
+  100% { transform: translate(108cqw, 34cqw) rotate(16deg); opacity: 0; }
+}
+@keyframes holo { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+@keyframes sweep { 0%, 55% { transform: translateX(-160%) skewX(-20deg); } 100% { transform: translateX(260%) skewX(-20deg); } }
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(8%, -6%) scale(1.12); }
+  66% { transform: translate(-6%, 8%) scale(0.92); }
+}
+@keyframes bokeh {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { transform: translateY(-110vh) scale(1.1); opacity: 0; }
+}
+@keyframes flip-top { 0% { transform: rotateX(0deg); } 100% { transform: rotateX(-90deg); } }
+@keyframes flip-bottom { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(0deg); } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes ring { 0% { transform: scale(0.6); opacity: 0.8; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes hint { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(-6px); opacity: 1; } }
+@keyframes rise-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.anim-fly { animation: fly 7s ease-in-out infinite; }
+.anim-holo { background-size: 200% 100%; animation: holo 4s linear infinite; }
+.anim-sweep { animation: sweep 3.2s ease-in-out infinite; }
+.anim-blob { animation: blob 16s ease-in-out infinite; }
+.anim-bokeh { animation: bokeh linear infinite; }
+.anim-flip-top { animation: flip-top 0.3s ease-in forwards; transform-origin: bottom; backface-visibility: hidden; }
+.anim-flip-bottom { animation: flip-bottom 0.3s 0.3s ease-out both; transform-origin: top; backface-visibility: hidden; }
+.anim-draw { stroke-dasharray: 100; stroke-dashoffset: 100; animation: draw 0.7s 0.2s ease-out forwards; }
+.anim-ring { animation: ring 1.8s ease-out infinite; }
+.anim-hint { animation: hint 1.6s ease-in-out infinite; }
+.anim-rise-in { animation: rise-in 0.8s var(--ease) both; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

@@ -63,6 +63,16 @@ begin
       ('encontro-livre', 'Encontro Livre', 'outros', 'animado', 'Moderno', 2990, false,
        'Um convite alegre e versátil para qualquer ocasião.',
        '{"variant":"animado","character":"baloes","scene":"ceu"}', array['rsvp','animacao']),
+      -- Cartão de Embarque (tema viagem premium)
+      ('embarque-na-festa', 'Embarque na Festa', 'aniversario-adulto', 'animado', 'Premium', 3990, true,
+       'Cartão de embarque com avião voando no pôr do sol, malas com adesivos e carimbo VIP.',
+       '{"variant":"ticket"}', array['rsvp','mapa','animacao','contagem_regressiva','links_individuais']),
+      ('volta-ao-mundo', 'Volta ao Mundo', 'aniversario-infantil', 'animado', 'Premium', 3490, true,
+       'O ursinho viajante embarca com as malas para a festa. Bilhete de avião completo.',
+       '{"variant":"ticket","character":"urso"}', array['rsvp','mapa','animacao','contagem_regressiva']),
+      ('destino-sim', 'Destino: Sim', 'casamento', 'classico', 'Premium', 5990, false,
+       'Para casamentos e mini weddings: cartão de embarque rumo ao grande dia.',
+       '{"variant":"ticket"}', array['rsvp','mapa','animacao','links_individuais','lista_de_presentes']),
       -- Clássicos (para quem prefere elegância)
       ('papel-fino', 'Papel Fino', 'casamento', 'classico', 'Editorial', 4990, true,
        'Tipografia serifada, margens generosas e programação de cerimônia e recepção.',
@@ -96,7 +106,7 @@ begin
     returning id into t_id;
     continue when t_id is null;
 
-    palettes := case when rec.layout::jsonb ->> 'variant' = 'animado'
+    palettes := case when rec.layout::jsonb ->> 'variant' in ('animado', 'ticket')
                      then array['rosa','azul','roxo','verde','laranja']
                      else array['champagne','salvia','rose'] end;
 

@@ -1,6 +1,7 @@
 import { useId, type CSSProperties, type ReactNode } from "react";
 import { Character, type CharacterKind } from "@/components/characters/characters";
 import { Bunting, Scene, SCENE_BASE, type SceneKind } from "./scenes";
+import { TicketBody } from "./ticket";
 import { resolveVariant } from "./variants";
 
 /** Conteúdo exibível do convite (chaves definidas pelos template_fields). Sempre texto puro. */
@@ -93,6 +94,7 @@ function MapLink({ url, off, color }: { url: string | null; off?: boolean; color
 export function InvitationView(props: Props) {
   const { layout } = props;
   if (layout?.variant === "animado") return <FunInvitation {...props} />;
+  if (layout?.variant === "ticket") return <TicketInvitation {...props} />;
   return <ClassicInvitation {...props} />;
 }
 
@@ -155,6 +157,38 @@ function FunInvitation({ content: c, layout, preview, inert, footer, className, 
         {footer && <div className="mt-[7cqw] w-full text-left">{footer}</div>}
       </div>
 
+      {preview && <Watermark color="#2a1a4a" />}
+    </article>
+  );
+}
+
+/** Tema "Cartão de Embarque" (bilhete de viagem com malas e avião). */
+const TICKET_BASE = "#ffe2b8";
+function TicketInvitation({ content: c, layout, preview, inert, footer, className, label }: Props) {
+  const character = CHARACTERS.has(layout?.character ?? "") ? (layout!.character as CharacterKind) : null;
+  const map = safeHttps(c.map_url);
+  return (
+    <article
+      aria-label={label}
+      className={`@container relative overflow-hidden ${className ?? ""}`}
+      style={{ background: TICKET_BASE, ["--ticket-base" as string]: TICKET_BASE } as CSSProperties}
+    >
+      <TicketBody
+        honoree={c.honoree_name || "Seu nome aqui"}
+        title={c.title || "Você está convidado"}
+        age={c.age}
+        date={formatLocalDate(c.event_date)}
+        time={formatTime(c.event_time)}
+        venue={c.venue_name}
+        address={c.address}
+        extraAddress={c.address_extra}
+        message={c.message}
+        extra={c.extra_info}
+        palette={c.palette}
+        character={character}
+        mapSlot={map ? <MapLink url={map} off={preview || inert} color="#5a2fd6" /> : null}
+        footer={footer}
+      />
       {preview && <Watermark color="#2a1a4a" />}
     </article>
   );

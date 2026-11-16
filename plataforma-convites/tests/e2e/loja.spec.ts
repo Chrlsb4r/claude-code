@@ -22,6 +22,24 @@ test("home apresenta seções principais e categorias reais do banco", async ({ 
   await noA11yViolations(page);
 });
 
+test("tema Cartão de Embarque: bilhete completo e botão de agenda gera .ics válido", async ({ page }) => {
+  await page.goto("/modelos/embarque-na-festa/convidado");
+  await page.getByRole("button", { name: "Abrir convite", exact: true }).click();
+  const ticket = page.getByRole("article", { name: /Convite de/ });
+  await expect(ticket).toContainText("Cartão de embarque");
+  await expect(ticket).toContainText("Embarque");
+  await expect(ticket).toContainText("Portão");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Adicionar à agenda" }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe("convite.ics");
+  const text = await (await import("node:fs")).promises.readFile((await file.path())!, "utf8");
+  expect(text).toContain("BEGIN:VEVENT");
+  expect(text).toContain("DTSTART:20270417");
+  await noHorizontalScroll(page);
+  await noA11yViolations(page);
+});
+
 test("demonstração do editor atualiza a prévia em tempo real", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("2. Nome do aniversariante").fill("Joaquim");
@@ -49,11 +67,13 @@ test("filtros do catálogo funcionam e podem ser removidos", async ({ page, isMo
   await form.getByLabel("Ocasião").selectOption("casamento");
   await form.getByLabel("Ordenar por").selectOption("maior_preco");
   await form.getByRole("button", { name: "Aplicar filtros" }).click();
-  await expect(page.getByRole("status")).toHaveText("2 convites encontrados");
-  const names = await page.getByRole("heading", { level: 2 }).filter({ hasText: /Papel Fino|Linho/ }).allTextContents();
-  expect(names).toEqual(["Linho & Sálvia", "Papel Fino"]);
+  await expect(page.getByRole("status")).toHaveText("3 convites encontrados");
+  const names = await page.getByRole("heading", { level: 2 }).filter({ hasText: /Papel Fino|Linho|Destino/ }).allTextContents();
+  expect(names).toHaveLength(3);
+  expect(names.at(-1)).toBe("Papel Fino"); // mais barato por último
+
   await page.getByRole("link", { name: "Remover filtro Casamento" }).click();
-  await expect(page.getByRole("status")).toHaveText(/18 convites encontrados/);
+  await expect(page.getByRole("status")).toHaveText(/21 convites encontrados/);
   await noHorizontalScroll(page);
   await noA11yViolations(page);
 });
@@ -116,9 +136,9 @@ test("convidado abre o envelope, vê a contagem e confirma presença com comemor
   await page.goto("/modelos/dino-aventura");
   await page.getByRole("link", { name: "Ver como o convidado recebe" }).click();
   await expect(page.getByRole("dialog", { name: "Você recebeu um convite" })).toBeVisible();
-  await page.getByRole("button", { name: "Abrir convite" }).click();
+  await page.getByRole("button", { name: "Abrir convite", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
-  await expect(page.getByRole("timer")).not.toContainText("--");
+  await expect(page.getByRole("timer")).toHaveAttribute("aria-label", /^Faltam \d+ dias/);
   const form = page.getByRole("form", { name: "Confirmar presença" });
   await form.getByRole("button", { name: "Confirmar resposta" }).click();
   await expect(form.getByRole("alert")).toHaveText("Escreva seu nome para confirmar.");
