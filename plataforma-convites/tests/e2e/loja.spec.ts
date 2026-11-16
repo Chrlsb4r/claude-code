@@ -12,8 +12,9 @@ async function noA11yViolations(page: Page) {
 
 test("home apresenta seções principais e categorias reais do banco", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Um convite à altura");
-  for (const h of ["Para cada ocasião", "Mais procurados", "Novidades do ateliê", "Do modelo ao link em quatro passos", "Perguntas frequentes"]) {
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Convites animados");
+  await expect(page.getByText("R$ 29,90").first()).toBeVisible();
+  for (const h of ["Qual é a festa?", "Os mais amados", "Acabaram de chegar", "É fácil assim", "Perguntas frequentes"]) {
     await expect(page.getByRole("heading", { name: h })).toBeVisible();
   }
   await expect(page.getByRole("link", { name: /Chá revelação/ })).toBeVisible();
@@ -23,7 +24,8 @@ test("home apresenta seções principais e categorias reais do banco", async ({ 
 
 test("demonstração do editor atualiza a prévia em tempo real", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("Nome do homenageado").fill("Joaquim");
+  await page.getByLabel("2. Nome do aniversariante").fill("Joaquim");
+  await page.getByRole("button", { name: "Astronauta" }).click();
   await expect(page.getByRole("article", { name: "Prévia da demonstração" })).toContainText("Joaquim");
 });
 
@@ -36,7 +38,7 @@ test("busca sem acento encontra o modelo e leva à página do modelo", async ({ 
   await page.getByRole("link", { name: "Lua de Algodão" }).click();
   await expect(page).toHaveURL(/\/modelos\/lua-de-algodao$/);
   await expect(page.getByRole("heading", { level: 1, name: "Lua de Algodão" })).toBeVisible();
-  await expect(page.getByRole("complementary").getByText("R$ 59,00")).toBeVisible();
+  await expect(page.getByRole("complementary").getByText("R$ 29,90")).toBeVisible();
   await expect(page.getByRole("link", { name: "Personalizar agora" })).toBeVisible();
 });
 
@@ -51,7 +53,7 @@ test("filtros do catálogo funcionam e podem ser removidos", async ({ page, isMo
   const names = await page.getByRole("heading", { level: 2 }).filter({ hasText: /Papel Fino|Linho/ }).allTextContents();
   expect(names).toEqual(["Linho & Sálvia", "Papel Fino"]);
   await page.getByRole("link", { name: "Remover filtro Casamento" }).click();
-  await expect(page.getByRole("status")).toHaveText(/12 convites encontrados/);
+  await expect(page.getByRole("status")).toHaveText(/18 convites encontrados/);
   await noHorizontalScroll(page);
   await noA11yViolations(page);
 });
@@ -90,4 +92,22 @@ test("cabeçalhos de segurança presentes", async ({ request }) => {
   expect(r.headers()["x-content-type-options"]).toBe("nosniff");
   expect(r.headers()["strict-transport-security"]).toContain("max-age");
   expect(r.headers()["x-powered-by"]).toBeUndefined();
+});
+
+test("personagens acenam em loop e param com 'reduzir movimento'", async ({ browser }) => {
+  const animated = await browser.newContext();
+  const p1 = await animated.newPage();
+  await p1.goto("/modelos/ursinho-festeiro");
+  const wave = p1.locator(".anim-wave").first();
+  await expect(wave).toBeAttached();
+  const s1 = await wave.evaluate((el) => { const cs = getComputedStyle(el); return { name: cs.animationName, iter: cs.animationIterationCount }; });
+  expect(s1).toEqual({ name: "wave", iter: "infinite" });
+  await animated.close();
+
+  const calm = await browser.newContext({ reducedMotion: "reduce" });
+  const p2 = await calm.newPage();
+  await p2.goto("/modelos/ursinho-festeiro");
+  const iter = await p2.locator(".anim-wave").first().evaluate((el) => getComputedStyle(el).animationIterationCount);
+  expect(iter).toBe("1");
+  await calm.close();
 });

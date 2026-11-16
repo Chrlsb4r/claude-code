@@ -35,9 +35,9 @@ export default async function OccasionPage({ params, searchParams }: PageProps<"
       <main id="conteudo" className="flex-1">
         <Container className="flex flex-col gap-10 py-12 sm:py-16">
           <header className="flex max-w-2xl flex-col gap-3">
-            <p className="text-xs uppercase tracking-[0.3em] text-champagne-ink">Ocasião</p>
-            <h1 className="font-serif text-5xl leading-tight">{cat.name}</h1>
-            <p className="text-graphite-soft">{cat.description ?? `Convites digitais para ${cat.name.toLowerCase()}, com confirmação de presença online.`}</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-brand-ink">Ocasião</p>
+            <h1 className="font-display text-5xl font-bold leading-tight">{cat.name}</h1>
+            <p className="text-ink-soft">{cat.description ?? `Convites digitais para ${cat.name.toLowerCase()}, com confirmação de presença online.`}</p>
           </header>
           <Suspense fallback={<CatalogSkeleton />}>
             <Results slug={slug} searchParams={searchParams} />

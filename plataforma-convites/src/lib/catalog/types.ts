@@ -12,7 +12,7 @@ export type TemplateCard = {
   price_cents: number;
   currency: string;
   features: string[];
-  layout: { variant?: string };
+  layout: { variant?: string; character?: string; scene?: string };
 };
 export type TemplateDetail = TemplateCard & {
   version: number;

@@ -1,51 +1,74 @@
 @import "tailwindcss";
 
 /* =========================================================
-   Tokens de design — identidade "papelaria fina"
-   Cores de marca: off-white, champagne, grafite, sálvia, rosé.
-   Champagne/sálvia/rosé claros são decorativos (fundos, bordas);
-   para texto usamos as variantes "-ink", com contraste AA sobre o off-white.
+   Tokens de design — identidade "festa colorida"
+   Cores vivas para fundos e enfeites; textos sempre com contraste AA.
    ========================================================= */
 :root {
-  --paper: #f8f6f2;
-  --paper-raised: #fffdf9;
-  --champagne: #d6c4a8;
-  --champagne-ink: #7a6646;
-  --graphite: #252525;
-  --graphite-soft: #5c5a56;
-  --sage: #a6b3a2;
-  --sage-ink: #4f5e4c;
-  --rose: #e8d8d8;
-  --rose-ink: #8a5a5a;
-  --line: #e7e1d7;
-  --danger: #a33a2c;
-  --success: #3f6b47;
-  --focus: #7a6646;
+  --cream: #fff8ee;
+  --card: #ffffff;
+  --ink: #2a1a4a;
+  --ink-soft: #5a4c78;
+  --line: #f0e3d2;
 
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --shadow-soft: 0 1px 2px rgb(37 37 37 / 0.04), 0 8px 24px -12px rgb(37 37 37 / 0.12);
-  --shadow-lift: 0 2px 4px rgb(37 37 37 / 0.05), 0 24px 48px -24px rgb(37 37 37 / 0.22);
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --brand: #d81b60;        /* rosa principal (texto branco 4,95:1) */
+  --brand-dark: #9c0d43;   /* sombra 3D dos botões */
+  --brand-ink: #b3164f;    /* rosa para texto pequeno sobre creme */
+  --brand-soft: #ffd6e5;
+
+  --yellow: #ffc93c;
+  --blue: #2f9bef;
+  --green: #2dbe6c;
+  --green-ink: #1e7a46;
+  --purple: #7b4dff;
+  --purple-ink: #5a2fd6;
+  --orange: #ff8a3d;
+  --pink-soft: #ffe1ec;
+  --pink-ink: #b3164f;
+  --sky-soft: #dff1ff;
+  --lemon-soft: #fff3c4;
+  --mint-soft: #d9f7e6;
+  --lilac-soft: #ece4ff;
+
+  --danger: #c0262d;
+  --success: #1e7a46;
+  --focus: #5a2fd6;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
+  --shadow-soft: 0 2px 0 rgb(42 26 74 / 0.06), 0 12px 28px -14px rgb(42 26 74 / 0.25);
+  --shadow-lift: 0 4px 0 rgb(42 26 74 / 0.08), 0 24px 44px -20px rgb(42 26 74 / 0.35);
+  --ease: cubic-bezier(0.34, 1.56, 0.64, 1); /* leve "overshoot" brincalhão */
 }
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-paper-raised: var(--paper-raised);
-  --color-champagne: var(--champagne);
-  --color-champagne-ink: var(--champagne-ink);
-  --color-graphite: var(--graphite);
-  --color-graphite-soft: var(--graphite-soft);
-  --color-sage: var(--sage);
-  --color-sage-ink: var(--sage-ink);
-  --color-rose: var(--rose);
-  --color-rose-ink: var(--rose-ink);
+  --color-cream: var(--cream);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
   --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-yellow: var(--yellow);
+  --color-blue: var(--blue);
+  --color-green: var(--green);
+  --color-green-ink: var(--green-ink);
+  --color-purple: var(--purple);
+  --color-purple-ink: var(--purple-ink);
+  --color-orange: var(--orange);
+  --color-pink-soft: var(--pink-soft);
+  --color-pink-ink: var(--pink-ink);
+  --color-sky-soft: var(--sky-soft);
+  --color-lemon-soft: var(--lemon-soft);
+  --color-mint-soft: var(--mint-soft);
+  --color-lilac-soft: var(--lilac-soft);
   --color-danger: var(--danger);
   --color-success: var(--success);
-  --font-serif: var(--font-display);
-  --font-sans: var(--font-body);
+  --font-display: var(--font-fredoka);
+  --font-sans: var(--font-nunito);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
@@ -55,23 +78,89 @@
 }
 
 html {
-  background: var(--paper);
-  color: var(--graphite);
+  background: var(--cream);
+  color: var(--ink);
   -webkit-text-size-adjust: 100%;
 }
 body {
-  font-family: var(--font-body), system-ui, sans-serif;
-  background: var(--paper);
-  color: var(--graphite);
+  font-family: var(--font-nunito), system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
 }
 :focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 3px solid var(--focus);
   outline-offset: 3px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 ::selection {
-  background: var(--rose);
+  background: var(--brand-soft);
 }
+
+/* =========================================================
+   Animações dos personagens e cenários (somente transform/opacity).
+   ========================================================= */
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(-28deg); }
+  30% { transform: rotate(10deg); }
+  45% { transform: rotate(-24deg); }
+  60% { transform: rotate(6deg); }
+  75% { transform: rotate(0deg); }
+}
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6%); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-14px) rotate(3deg); }
+}
+@keyframes drift {
+  from { transform: translateX(-12%); }
+  to { transform: translateX(12%); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.25; transform: scale(0.6); }
+}
+@keyframes rise {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.9; }
+  100% { transform: translateY(-120%); opacity: 0; }
+}
+@keyframes fall {
+  0% { transform: translateY(-20%) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(110%) rotate(320deg); opacity: 0.9; }
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-10deg); }
+}
+@keyframes spout {
+  0%, 100% { transform: scaleY(0.6); opacity: 0.6; }
+  50% { transform: scaleY(1.1); opacity: 1; }
+}
+@keyframes pop-in {
+  from { transform: scale(0.8) translateY(10px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.anim-wave { animation: wave 1.6s ease-in-out infinite; transform-box: view-box; }
+.anim-blink { animation: blink 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.anim-bob { animation: bob 2.4s ease-in-out infinite; }
+.anim-float { animation: float 4.5s ease-in-out infinite; }
+.anim-drift { animation: drift 9s ease-in-out infinite alternate; }
+.anim-twinkle { animation: twinkle 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.anim-rise { animation: rise 4s linear infinite; transform-box: fill-box; }
+.anim-fall { animation: fall 5s linear infinite; transform-box: fill-box; }
+.anim-wiggle { animation: wiggle 1.8s ease-in-out infinite; transform-box: view-box; }
+.anim-spout { animation: spout 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom center; }
+.anim-pop { animation: pop-in 0.6s var(--ease) both; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

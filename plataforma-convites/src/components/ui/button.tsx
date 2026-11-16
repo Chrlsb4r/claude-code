@@ -4,20 +4,21 @@ import type { ButtonHTMLAttributes } from "react";
 type Variant = "primary" | "secondary" | "ghost";
 type Size = "md" | "lg";
 
+// Botões "3D" brincalhões: sombra sólida embaixo que afunda ao clicar.
 const variants: Record<Variant, string> = {
-  primary: "bg-graphite text-paper hover:bg-black shadow-soft",
-  secondary: "bg-paper-raised text-graphite border border-line hover:border-champagne",
-  ghost: "text-graphite hover:bg-rose/40",
+  primary: "bg-brand text-white shadow-[0_5px_0_var(--brand-dark)] hover:-translate-y-0.5 hover:shadow-[0_7px_0_var(--brand-dark)] active:translate-y-1 active:shadow-[0_1px_0_var(--brand-dark)]",
+  secondary: "bg-white text-ink border-2 border-ink shadow-[0_5px_0_var(--ink)] hover:-translate-y-0.5 hover:shadow-[0_7px_0_var(--ink)] active:translate-y-1 active:shadow-[0_1px_0_var(--ink)]",
+  ghost: "text-ink hover:bg-pink-soft",
 };
 const sizes: Record<Size, string> = {
   md: "h-11 px-5 text-sm",
-  lg: "h-13 px-7 text-base",
+  lg: "h-14 px-8 text-lg",
 };
 
 export function buttonClasses(variant: Variant = "primary", size: Size = "md", className?: string) {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-full font-medium tracking-wide",
-    "transition-[background-color,border-color,transform] duration-200 ease-premium active:scale-[0.98]",
+    "inline-flex items-center justify-center gap-2 rounded-full font-display font-semibold tracking-wide",
+    "transition-[background-color,border-color,transform,box-shadow] duration-200 ease-premium",
     "disabled:pointer-events-none disabled:opacity-50",
     variants[variant],
     sizes[size],

@@ -30,9 +30,9 @@ export default function CatalogPage({ searchParams }: PageProps<"/convites">) {
       <main id="conteudo" className="flex-1">
         <Container className="flex flex-col gap-10 py-12 sm:py-16">
           <header className="flex max-w-2xl flex-col gap-3">
-            <p className="text-xs uppercase tracking-[0.3em] text-champagne-ink">Catálogo</p>
-            <h1 className="font-serif text-5xl leading-tight">Todos os convites</h1>
-            <p className="text-graphite-soft">Cada modelo é uma página web interativa, com confirmação de presença e link exclusivo.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-brand-ink">Catálogo</p>
+            <h1 className="font-display text-5xl font-bold leading-tight">Todos os convites</h1>
+            <p className="text-ink-soft">Cada modelo é uma página web interativa, com confirmação de presença e link exclusivo.</p>
           </header>
           <Suspense fallback={<CatalogSkeleton />}>
             <Results searchParams={searchParams} />

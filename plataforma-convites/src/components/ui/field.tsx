@@ -4,8 +4,8 @@ import { cn } from "@/lib/cn";
 import { useId, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from "react";
 
 const control =
-  "w-full rounded-md border border-line bg-paper-raised px-4 text-base text-graphite placeholder:text-graphite-soft/70 " +
-  "transition-colors duration-200 hover:border-champagne focus:border-champagne-ink focus:outline-none " +
+  "w-full rounded-md border-2 border-line bg-white px-4 text-base text-ink placeholder:text-ink-soft/70 " +
+  "transition-colors duration-200 hover:border-brand-soft focus:border-purple focus:outline-none " +
   "aria-invalid:border-danger";
 
 type FieldProps = { label: string; hint?: string; error?: string; children: (ids: { id: string; describedBy?: string }) => ReactNode };
@@ -17,12 +17,12 @@ export function Field({ label, hint, error, children }: FieldProps) {
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-graphite">
+      <label htmlFor={id} className="text-sm font-bold text-ink">
         {label}
       </label>
       {children({ id, describedBy })}
       {hint && !error && (
-        <p id={hintId} className="text-xs text-graphite-soft">
+        <p id={hintId} className="text-xs text-ink-soft">
           {hint}
         </p>
       )}

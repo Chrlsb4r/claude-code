@@ -47,7 +47,7 @@ export function futureDate(days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export async function publishedVersionId(c: Client, templateSlug = "jardim-encantado") {
+export async function publishedVersionId(c: Client, templateSlug = "ursinho-festeiro") {
   const r = await c.query(
     `select v.id from public.template_versions v join public.templates t on t.id = v.template_id where t.slug = $1 and v.published_at is not null`,
     [templateSlug],

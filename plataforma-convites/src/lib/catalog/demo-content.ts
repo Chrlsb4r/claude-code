@@ -28,6 +28,21 @@ const BY_CATEGORY: Record<string, InvitationContent> = {
   outros: { title: "Encontro", honoree_name: "Amigos de sempre", message: "Um dia simples, especial pela companhia." },
 };
 
-export function demoContent(categorySlug: string): InvitationContent {
-  return { ...base, event_date: DEMO_DATE, ...(BY_CATEGORY[categorySlug] ?? BY_CATEGORY.outros) };
+// Nomes variados para as capas infantis não ficarem todas iguais.
+const KID_NAMES = ["Helena", "Miguel", "Alice", "Gael", "Laura", "Davi", "Cecília", "Theo", "Maria Luísa", "Bento"];
+
+function hash(s: string) {
+  let h = 0;
+  for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return h;
+}
+
+export function demoContent(categorySlug: string, templateSlug?: string): InvitationContent {
+  const c: InvitationContent = { ...base, event_date: DEMO_DATE, ...(BY_CATEGORY[categorySlug] ?? BY_CATEGORY.outros) };
+  if (templateSlug && (categorySlug === "aniversario-infantil" || categorySlug === "cha-de-bebe" || categorySlug === "batizado")) {
+    const h = hash(templateSlug);
+    c.honoree_name = KID_NAMES[h % KID_NAMES.length];
+    if (categorySlug === "aniversario-infantil") c.age = String(1 + (h % 9));
+  }
+  return c;
 }

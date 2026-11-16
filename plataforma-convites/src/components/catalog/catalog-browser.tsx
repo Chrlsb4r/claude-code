@@ -7,7 +7,7 @@ import type { Category, Facets } from "@/lib/catalog/types";
 import { featureLabel } from "@/lib/format";
 
 const select =
-  "h-11 w-full rounded-md border border-line bg-paper-raised px-3 text-sm transition-colors hover:border-champagne focus:border-champagne-ink focus:outline-none";
+  "h-11 w-full rounded-md border-2 border-line bg-white font-semibold px-3 text-sm transition-colors hover:border-brand-soft focus:border-brand-ink focus:outline-none";
 
 function Filters({ q, categories, facets, lockCategory }: { q: CatalogQuery; categories: Category[]; facets: Facets; lockCategory?: string }) {
   return (
@@ -83,7 +83,7 @@ function ActiveFilters({ q, categories, facets }: { q: CatalogQuery; categories:
         <li key={c.key}>
           <Link
             href={catalogHref(q, { [c.key]: undefined, pagina: undefined })}
-            className="inline-flex h-8 items-center gap-2 rounded-full border border-line bg-paper-raised px-3 text-xs hover:border-champagne"
+            className="inline-flex h-8 items-center gap-2 rounded-full border border-line bg-card px-3 text-xs hover:border-brand-soft"
             aria-label={`Remover filtro ${c.label}`}
           >
             {c.label} <span aria-hidden>×</span>
@@ -106,7 +106,7 @@ export async function CatalogBrowser({ q, lockCategory }: { q: CatalogQuery; loc
   return (
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px_minmax(0,1fr)]">
       <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <details className="group rounded-lg border border-line bg-paper-raised p-4 lg:hidden">
+        <details className="group rounded-lg border border-line bg-card p-4 lg:hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium [&::-webkit-details-marker]:hidden">
             Filtrar e ordenar <span aria-hidden className="transition-transform group-open:rotate-180">⌄</span>
           </summary>
@@ -121,7 +121,7 @@ export async function CatalogBrowser({ q, lockCategory }: { q: CatalogQuery; loc
 
       <section aria-labelledby="resultados-t" className="flex min-w-0 flex-col gap-8">
         <div className="flex flex-col gap-3">
-          <p id="resultados-t" className="text-sm text-graphite-soft" role="status">
+          <p id="resultados-t" className="text-sm text-ink-soft" role="status">
             {result.total === 0 ? "Nenhum convite encontrado" : `${result.total} ${result.total === 1 ? "convite encontrado" : "convites encontrados"}`}
           </p>
           {!lockCategory && <ActiveFilters q={query} categories={categories} facets={facets} />}
@@ -129,8 +129,8 @@ export async function CatalogBrowser({ q, lockCategory }: { q: CatalogQuery; loc
 
         {result.total === 0 ? (
           <div className="flex flex-col items-start gap-4 rounded-lg border border-dashed border-line p-10">
-            <p className="font-serif text-2xl">Não encontramos convites com esses filtros.</p>
-            <p className="text-sm text-graphite-soft">Tente remover algum filtro ou buscar por outra palavra.</p>
+            <p className="font-display text-2xl font-bold">Não encontramos convites com esses filtros.</p>
+            <p className="text-sm text-ink-soft">Tente remover algum filtro ou buscar por outra palavra.</p>
             <Link href="/convites" className={buttonClasses("secondary")}>Ver todos os convites</Link>
           </div>
         ) : (
@@ -146,7 +146,7 @@ export async function CatalogBrowser({ q, lockCategory }: { q: CatalogQuery; loc
                 key={n}
                 href={catalogHref(query, { pagina: n === 1 ? undefined : n })}
                 aria-current={n === page ? "page" : undefined}
-                className={`grid h-10 w-10 place-items-center rounded-full text-sm ${n === page ? "bg-graphite text-paper" : "border border-line hover:border-champagne"}`}
+                className={`grid h-10 w-10 place-items-center rounded-full text-sm ${n === page ? "bg-ink text-cream" : "border border-line hover:border-brand-soft"}`}
               >
                 {n}
               </Link>

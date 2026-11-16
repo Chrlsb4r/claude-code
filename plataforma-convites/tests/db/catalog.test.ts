@@ -36,7 +36,7 @@ describe.skipIf(skipDb())("funções do catálogo (como anon)", () => {
   });
 
   it("filtra por ocasião, tema, recurso e faixa de preço", async () => {
-    const r = await search("p_category => 'casamento', p_feature => 'links_individuais', p_max_price => 9000");
+    const r = await search("p_category => 'casamento', p_feature => 'links_individuais', p_max_price => 5000");
     expect(r.items.map((i: { slug: string }) => i.slug)).toEqual(["papel-fino"]);
     const th = await search("p_theme => 'noturno'");
     expect(th.items.every((i: { theme: { slug: string } }) => i.theme.slug === "noturno")).toBe(true);
@@ -54,7 +54,7 @@ describe.skipIf(skipDb())("funções do catálogo (como anon)", () => {
   it("detalhe do modelo traz campos, preço e nada de dados internos", async () => {
     const r = await asAnon(c, () => c.query(`select catalog_template('papel-fino') as r`));
     const t = r.rows[0].r;
-    expect(t.price_cents).toBe(8900);
+    expect(t.price_cents).toBe(4990);
     expect(t.fields.length).toBeGreaterThan(10);
     expect(JSON.stringify(t)).not.toMatch(/"id"|template_id|created_at/);
   });

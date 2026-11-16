@@ -27,7 +27,7 @@ describe.skipIf(skipDb())("pedidos, pagamentos e isolamento (RLS)", () => {
 
   it("preço vem da versão publicada, não do cliente; tabelas de pedido não aceitam escrita direta", async () => {
     const o = await newOrder(userA);
-    expect(o.total_cents).toBe(4900);
+    expect(o.total_cents).toBe(2990);
     await expect(asUser(c, userA, () => c.query(`update orders set total_cents = 1 where id = $1`, [o.id]))).rejects.toThrow(/permission denied/);
     await expect(
       asUser(c, userA, () => c.query(`insert into orders (user_id, subtotal_cents, total_cents) values ($1, 100, 100)`, [userA])),
