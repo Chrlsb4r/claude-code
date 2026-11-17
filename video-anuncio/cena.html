@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #e8d6b0; }
+  svg { display: block; }
+  text { font-family: Fredoka, sans-serif; }
+  /* Transformações animadas giram em torno da própria peça. */
+  .tb { transform-box: fill-box; }
+</style>
+</head>
+<body>
+<svg id="palco" width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+/* =====================================================================
+   Anúncio em recorte de papel — linha do tempo controlada por seek(t).
+   Cada peça de papel tem sombra e borda levemente irregular (filtro #pp).
+   O "tremidinho" de stop-motion muda a cada quadro (boil).
+   ===================================================================== */
+const TL = window.TIMELINE;
+const SC = Object.fromEntries(TL.scenes.map((s) => [s.id, s]));
+const palco = document.getElementById('palco');
+const INK = '#3a2a1a';
+
+const C = {
+  kraft: '#e8d6b0', sky: '#a9dcf2', cloud: '#fffaf0', sun: '#ffd25c', g1: '#8fd17f', g2: '#62b25f', g3: '#3f8f4a',
+  pink: '#ff6f9f', pinkD: '#d8326b', yellow: '#ffcf48', blue: '#4fb3f6', purple: '#7b4dff', purpleD: '#4b2bb0',
+  orange: '#ff8a3d', mint: '#9fe3c9', cream: '#fff7e8', white: '#fffdf8', red: '#ef4b4b', teal: '#1fb5a8',
+};
+
+/* ---------- Peças ---------- */
+const pc = (inner, extra = '') => `<g filter="url(#pp)" ${extra}>${inner}</g>`;     // peça de papel
+const pcs = (inner, extra = '') => `<g filter="url(#pps)" ${extra}>${inner}</g>`;   // peça pequena (sombra curta)
+const brad = (x, y) => `<circle cx="${x}" cy="${y}" r="7" fill="#d9a93c"/><circle cx="${x - 2}" cy="${y - 2}" r="2.5" fill="#fff4c8"/>`;
+
+function cloud(x, y, s = 1, id = '') {
+  return `<g ${id ? `id="${id}"` : ''} transform="translate(${x} ${y}) scale(${s})">${pc(`
+    <path d="M-120 30 Q-130 -20 -80 -25 Q-70 -75 -10 -65 Q30 -100 75 -60 Q130 -65 125 -10 Q160 10 125 40 Z" fill="${C.cloud}"/>`)}</g>`;
+}
+
+function star(x, y, r, fill, id) {
+  let p = '';
+  for (let i = 0; i < 10; i++) {
+    const a = Math.PI / 5 * i - Math.PI / 2, rr = i % 2 ? r * 0.45 : r;
+    p += `${(x + rr * Math.cos(a)).toFixed(1)},${(y + rr * Math.sin(a)).toFixed(1)} `;
+  }
+  return pcs(`<polygon points="${p}" fill="${fill}"/>`, `id="${id}" class="tb" style="transform-origin:center"`);
+}
+
+/* ---------- Cabeças dos personagens (centro em 0,0) ---------- */
+function eyes(id, lx, rx, y, r = 13) {
+  return `<g id="${id}" class="tb" style="transform-origin:center">
+    <ellipse cx="${lx}" cy="${y}" rx="${r}" ry="${r * 1.3}" fill="${INK}"/><ellipse cx="${rx}" cy="${y}" rx="${r}" ry="${r * 1.3}" fill="${INK}"/>
+    <circle cx="${lx + 4}" cy="${y - 6}" r="${r * 0.35}" fill="#fff"/><circle cx="${rx + 4}" cy="${y - 6}" r="${r * 0.35}" fill="#fff"/></g>`;
+}
+function headSvg(kind, id) {
+  const cheeks = `<ellipse cx="-62" cy="22" rx="16" ry="10" fill="#ff8fa8" opacity=".7"/><ellipse cx="62" cy="22" rx="16" ry="10" fill="#ff8fa8" opacity=".7"/>`;
+  const smile = `<path id="${id}-smile" d="M-22 34 Q0 54 22 34" fill="none" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>`;
+  const frown = `<path id="${id}-frown" d="M-20 48 Q0 32 20 48" fill="none" stroke="${INK}" stroke-width="7" stroke-linecap="round" opacity="0"/>`;
+  if (kind === 'urso') return `
+    ${pc(`<circle cx="-70" cy="-72" r="36" fill="#c98446"/><circle cx="70" cy="-72" r="36" fill="#c98446"/>`)}
+    ${pcs(`<circle cx="-70" cy="-72" r="18" fill="#f3d3a8"/><circle cx="70" cy="-72" r="18" fill="#f3d3a8"/>`)}
+    ${pc(`<circle r="100" fill="#c98446"/>`)}
+    ${pcs(`<ellipse cx="0" cy="30" rx="50" ry="38" fill="#f3d3a8"/>`)}
+    ${pcs(`<ellipse cx="0" cy="12" rx="17" ry="12" fill="${INK}"/>`)}
+    ${eyes(id + '-eyes', -38, 38, -18)}${cheeks}${smile}${frown}`;
+  if (kind === 'dino') return `
+    ${[-70, -25, 25].map((x, i) => pcs(`<path d="M${x} -${86 - i * 4} l24 -46 l24 46 z" fill="${C.orange}"/>`)).join('')}
+    ${pc(`<ellipse rx="112" ry="95" fill="#5bcb6e"/>`)}
+    ${pcs(`<ellipse cx="10" cy="38" rx="62" ry="34" fill="#c9efa0"/>`)}
+    <circle cx="-8" cy="28" r="5" fill="${INK}"/><circle cx="26" cy="28" r="5" fill="${INK}"/>
+    ${eyes(id + '-eyes', -40, 40, -20)}${cheeks}${smile}${frown}`;
+  if (kind === 'coelha') return `
+    <g id="${id}-ear" class="tb" style="transform-origin:50% 100%">${pc(`<ellipse cx="38" cy="-150" rx="28" ry="82" fill="#fff"/><ellipse cx="38" cy="-148" rx="13" ry="58" fill="#ffb3cb"/>`)}</g>
+    ${pc(`<ellipse cx="-38" cy="-150" rx="28" ry="82" fill="#fff"/><ellipse cx="-38" cy="-148" rx="13" ry="58" fill="#ffb3cb"/>`)}
+    ${pc(`<circle r="98" fill="#fff"/>`)}
+    ${pcs(`<path d="M30 -88 l-40 -22 l0 44 z M30 -88 l40 -22 l0 44 z" fill="${C.pinkD}"/><circle cx="30" cy="-88" r="11" fill="${C.yellow}"/>`)}
+    <ellipse cx="0" cy="14" rx="12" ry="9" fill="#ff7aa2"/>
+    ${eyes(id + '-eyes', -38, 38, -10)}${cheeks}${smile}${frown}`;
+  if (kind === 'leao') return `
+    ${pc(Array.from({ length: 14 }, (_, i) => { const a = i / 14 * Math.PI * 2; return `<circle cx="${(Math.cos(a) * 104).toFixed(1)}" cy="${(Math.sin(a) * 100).toFixed(1)}" r="38" fill="#e2762b"/>`; }).join(''))}
+    ${pc(`<circle r="92" fill="#f6b13d"/>`)}
+    ${pcs(`<ellipse cx="0" cy="32" rx="44" ry="32" fill="#fbe0a6"/>`)}
+    <path d="M-14 14 L14 14 L0 30 Z" fill="${INK}"/>
+    ${eyes(id + '-eyes', -36, 36, -16)}${cheeks}${smile}${frown}`;
+  if (kind === 'baleia') return `
+    ${pc(`<path d="M-110 20 Q-110 -90 0 -92 Q100 -92 108 10 Q100 96 0 96 Q-108 96 -110 20Z" fill="#4fb3f6"/>`)}
+    ${pcs(`<path d="M-96 46 Q0 84 98 46 Q80 92 0 92 Q-80 92 -96 46Z" fill="#d6f1ff"/>`)}
+    ${pcs(`<path d="M0 -92 Q-14 -126 -30 -132 M0 -92 Q0 -130 0 -140 M0 -92 Q14 -126 30 -132" fill="none" stroke="#9fdcff" stroke-width="10" stroke-linecap="round"/>`)}
+    ${eyes(id + '-eyes', -40, 40, -10)}${cheeks}${smile}${frown}`;
+}
+
+const BODY = {
+  urso: { body: '#c98446', light: '#f3d3a8', limb: '#b8743e' },
+  dino: { body: '#5bcb6e', light: '#c9efa0', limb: '#4cb85f' },
+  coelha: { body: '#ff8fb8', light: '#ffe1ec', limb: '#ffffff' },
+  leao: { body: '#f6b13d', light: '#fbe0a6', limb: '#eaa02c' },
+};
+
+/** Fantoche de papel completo. Origem nos pés (0,0); ~560 de altura. */
+function puppet(kind, id, { hat = false } = {}) {
+  const b = BODY[kind];
+  const tail = kind === 'dino' ? pc(`<path d="M-70 -110 Q-190 -90 -210 -190 Q-150 -120 -60 -150Z" fill="${b.body}"/>`) : '';
+  return `<g id="${id}" class="tb" style="transform-origin:50% 100%">
+    ${tail}
+    ${pc(`<ellipse cx="-44" cy="-22" rx="40" ry="24" fill="${b.limb}"/><ellipse cx="44" cy="-22" rx="40" ry="24" fill="${b.limb}"/>`)}
+    <g id="${id}-armL" class="tb" style="transform-origin:50% 8%">${pc(`<rect x="-128" y="-210" width="50" height="128" rx="25" fill="${b.limb}" transform="rotate(14 -103 -205)"/>`)}</g>
+    ${pc(`<ellipse cx="0" cy="-130" rx="96" ry="104" fill="${b.body}"/>`)}
+    ${pcs(`<ellipse cx="0" cy="-116" rx="58" ry="62" fill="${b.light}"/>`)}
+    <g id="${id}-armR" class="tb" style="transform-origin:50% 8%">${pc(`<rect x="78" y="-210" width="50" height="128" rx="25" fill="${b.limb}" transform="rotate(-14 103 -205)"/>`)}</g>
+    ${brad(-96, -196)}${brad(96, -196)}
+    <g id="${id}-head" class="tb" style="transform-origin:50% 90%"><g transform="translate(0 -300)">${headSvg(kind, id)}
+      ${hat ? `<g transform="translate(14 -92) rotate(12)">${pc(`<path d="M0 -120 L-46 0 L46 0 Z" fill="${C.yellow}"/>`)}${pcs(`<path d="M-24 -58 L24 -58 M-34 -28 L34 -28" stroke="${C.pinkD}" stroke-width="10" stroke-linecap="round"/><circle cx="0" cy="-124" r="16" fill="${C.pinkD}"/>`)}</g>` : ''}
+    </g></g>
+  </g>`;
+}
+
+/* ---------- Faixa de legenda (papel rasgado + fita adesiva) ---------- */
+function caption(id, text, cy = 1415) {
+  const w = Math.min(960, 90 + text.length * 30);
+  const h = 130;
+  let top = `M${-w / 2} ${-h / 2}`;
+  for (let x = -w / 2; x <= w / 2; x += 24) top += ` L${x} ${-h / 2 + ((x * 7) % 9) - 4}`;
+  let bot = '';
+  for (let x = w / 2; x >= -w / 2; x -= 24) bot += ` L${x} ${h / 2 + ((x * 5) % 9) - 4}`;
+  return `<g transform="translate(540 ${cy})"><g id="${id}" class="tb" style="transform-origin:center">
+    ${pc(`<path d="${top} L${w / 2} ${h / 2}${bot} Z" fill="${C.white}"/>`)}
+    <rect x="${-w / 2 - 30}" y="-34" width="90" height="40" fill="#f5e6a8" opacity=".75" transform="rotate(-24 ${-w / 2} -14)"/>
+    <rect x="${w / 2 - 60}" y="-34" width="90" height="40" fill="#f5e6a8" opacity=".75" transform="rotate(22 ${w / 2} -14)"/>
+    <text x="0" y="20" text-anchor="middle" font-size="58" font-weight="700" fill="${INK}">${text}</text>
+  </g></g>`;
+}
+
+/* ---------- Telefone de papel ---------- */
+function phone(id, x, y, w, h, screen, rot = 0) {
+  return `<g transform="translate(${x} ${y}) rotate(${rot})"><g id="${id}" class="tb" style="transform-origin:center">
+    ${pc(`<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="${w * 0.12}" fill="#2a1a4a"/>`)}
+    ${pcs(`<rect x="${-w / 2 + 22}" y="${-h / 2 + 22}" width="${w - 44}" height="${h - 44}" rx="${w * 0.08}" fill="${C.white}"/>`)}
+    <rect x="-60" y="${-h / 2 + 34}" width="120" height="26" rx="13" fill="#2a1a4a"/>
+    <g clip-path="url(#clip-${id})">${screen}</g>
+    <clipPath id="clip-${id}"><rect x="${-w / 2 + 22}" y="${-h / 2 + 22}" width="${w - 44}" height="${h - 44}" rx="${w * 0.08}"/></clipPath>
+  </g></g>`;
+}
+
+/* =====================================================================
+   CENAS
+   ===================================================================== */
+const scenes = [];
+
+// 1. Theo vai fazer 5 anos
+scenes.push(['theo', `
+  <rect width="1080" height="1920" fill="${C.sky}"/>
+  <g id="sol" class="tb" style="transform-origin:center"><g transform="translate(860 300)">
+    ${pc(Array.from({ length: 12 }, (_, i) => `<path d="M0 -150 L18 -100 L-18 -100 Z" fill="${C.yellow}" transform="rotate(${i * 30})"/>`).join(''))}
+    ${pc(`<circle r="90" fill="${C.sun}"/>`)}</g></g>
+  ${cloud(240, 300, 1.1, 'nuv1')}${cloud(700, 560, 0.8, 'nuv2')}
+  <g id="cal" class="tb" style="transform-origin:50% 0%"><g transform="translate(790 820) rotate(6)">
+    ${pc(`<rect x="-130" y="0" width="260" height="290" rx="20" fill="${C.white}"/>`)}
+    ${pcs(`<rect x="-130" y="0" width="260" height="70" rx="20" fill="${C.red}"/><rect x="-130" y="40" width="260" height="30" fill="${C.red}"/>`)}
+    <text x="0" y="50" text-anchor="middle" font-size="40" font-weight="700" fill="#fff">ABRIL</text>
+    <text x="0" y="215" text-anchor="middle" font-size="150" font-weight="700" fill="${INK}">17</text>
+    ${pcs(`<circle cx="0" cy="-10" r="16" fill="${C.pinkD}"/>`)}
+  </g></g>
+  ${pc(`<path d="M0 1340 Q270 1240 540 1320 T1080 1290 V1920 H0Z" fill="${C.g1}"/>`)}
+  ${pc(`<path d="M0 1460 Q300 1380 600 1450 T1080 1420 V1920 H0Z" fill="${C.g2}"/>`)}
+  ${[[120, 1380, C.pink], [960, 1350, C.yellow], [300, 1470, C.white], [820, 1480, C.pink]].map(([x, y, c]) => pcs(`<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map((a) => `<ellipse cx="0" cy="-16" rx="11" ry="18" fill="${c}" transform="rotate(${a})"/>`).join('')}<circle r="9" fill="${C.yellow}"/></g>`)).join('')}
+  <g transform="translate(420 1330) scale(1.15)">${puppet('urso', 'theo1', { hat: true })}</g>
+  <g id="balao1" class="tb" style="transform-origin:50% 100%"><g transform="translate(210 760)">
+    <path d="M0 110 Q-20 220 10 330" fill="none" stroke="${INK}" stroke-width="4"/>
+    ${pc(`<ellipse rx="80" ry="96" fill="${C.pink}"/><path d="M-12 94 L12 94 L0 112 Z" fill="${C.pink}"/>`)}
+    <ellipse cx="-26" cy="-36" rx="16" ry="26" fill="#fff" opacity=".45" transform="rotate(25 -26 -36)"/></g></g>
+  ${caption('cap-theo', 'O Theo vai fazer 5 anos!')}
+`]);
+
+// 2. Convite de papel: voa, molha, ninguém confirma
+const env = (id, x, y, r) => `<g transform="translate(${x} ${y}) rotate(${r})"><g id="${id}" class="tb" style="transform-origin:center">
+  ${pc(`<rect x="-80" y="-55" width="160" height="110" rx="8" fill="${C.white}"/>`)}
+  <path d="M-80 -55 L0 10 L80 -55" fill="none" stroke="#d9cbb0" stroke-width="5"/>
+  ${pcs(`<path d="M0 0 C -12 -14 -28 -2 -14 12 L0 24 L14 12 C 28 -2 12 -14 0 0Z" fill="${C.pinkD}"/>`)}
+  <rect id="${id}-wet" x="-80" y="-55" width="160" height="110" rx="8" fill="#6f8fa8" opacity="0"/>
+</g></g>`;
+scenes.push(['papel', `
+  <rect width="1080" height="1920" fill="#c8d5db"/>
+  <g id="nuvemchuva" class="tb"><g transform="translate(560 330)">
+    ${pc(`<path d="M-260 60 Q-280 -30 -180 -40 Q-160 -130 -50 -110 Q20 -170 110 -100 Q220 -110 230 -10 Q300 20 240 80 Z" fill="#8a96a3"/>`)}
+    <g id="gotas">${Array.from({ length: 14 }, (_, i) => pcs(`<path d="M${-220 + i * 34} ${100 + (i % 3) * 50} q-10 22 0 30 q10 -8 0 -30z" fill="${C.blue}"/>`)).join('')}</g>
+  </g></g>
+  ${pc(`<path d="M0 1380 Q300 1330 600 1380 T1080 1360 V1920 H0Z" fill="#7da07a"/>`)}
+  ${pcs(`<ellipse cx="760" cy="1440" rx="170" ry="34" fill="#6f9fc8"/>`)}
+  <g transform="translate(420 1390) scale(1.1)">${puppet('urso', 'theo2')}</g>
+  ${env('env1', 560, 1130, -8)}${env('env2', 600, 1090, 6)}${env('env3', 540, 1060, -2)}
+  <g transform="translate(800 820)"><g id="bolha0" class="tb" style="transform-origin:0% 100%">
+    ${pc(`<path d="M-150 -90 Q-150 -150 -90 -150 H150 Q200 -150 200 -90 V30 Q200 90 140 90 H-40 L-110 150 L-90 90 Q-150 90 -150 30 Z" fill="${C.white}"/>`)}
+    <text x="25" y="-38" text-anchor="middle" font-size="42" font-weight="700" fill="${INK}">Confirmados:</text>
+    <text x="25" y="56" text-anchor="middle" font-size="96" font-weight="700" fill="${C.red}">0</text>
+  </g></g>
+  ${caption('cap-papel', 'Convite de papel? Voa, molha...')}
+`]);
+
+// 3. Descoberta
+scenes.push(['descoberta', `
+  <rect width="1080" height="1920" fill="#5b33c9"/>
+  <g id="raios" class="tb" style="transform-origin:center"><g transform="translate(540 980)">
+    ${Array.from({ length: 16 }, (_, i) => `<path d="M0 0 L-90 -1400 L90 -1400 Z" fill="${i % 2 ? '#7b4dff' : '#6a3ee6'}" transform="rotate(${i * 22.5})"/>`).join('')}
+  </g></g>
+  ${[[180, 360, 40, C.yellow], [900, 300, 34, '#fff'], [140, 1180, 30, '#fff'], [940, 1150, 44, C.yellow], [300, 640, 24, C.pink], [820, 700, 28, C.mint]].map(([x, y, r, c], i) => star(x, y, r, c, `est${i}`)).join('')}
+  ${phone('fone3', 560, 920, 520, 920, `
+    <rect x="-240" y="-440" width="480" height="880" fill="${C.cream}"/>
+    <g transform="translate(0 -110) scale(.85)">${headSvg('urso', 'mini3')}</g>
+    <text x="0" y="90" text-anchor="middle" font-size="96" font-weight="700" stroke="#fff" stroke-width="8" paint-order="stroke">${['F', 'e', 's', 't', 'a'].map((ch, i) => `<tspan fill="${[C.pinkD, C.orange, '#c99000', '#2a9d58', C.blue][i]}">${ch}</tspan>`).join('')}</text>
+    <text x="0" y="190" text-anchor="middle" font-size="76" font-weight="700" fill="${C.purpleD}" stroke="#fff" stroke-width="8" paint-order="stroke">no Link</text>
+    <text x="0" y="270" text-anchor="middle" font-size="34" font-weight="600" fill="#6b5f86">convites animados</text>
+  `)}
+  <g transform="translate(190 1520) scale(.85)">${puppet('urso', 'theo3', { hat: true })}</g>
+  ${caption('cap-descoberta', 'Até que ele descobriu o Festa no Link!', 1500)}
+`]);
+
+// 4. Editor: tema → dados → convite pronto
+const field = (id, y, label, value) => `
+  <text x="-190" y="${y - 22}" font-size="30" font-weight="600" fill="#6b5f86">${label}</text>
+  ${pcs(`<rect x="-200" y="${y}" width="400" height="80" rx="18" fill="#fff" stroke="#e6dccb" stroke-width="4"/>`)}
+  <clipPath id="clip-${id}"><rect id="${id}-mask" x="-180" y="${y}" width="0" height="80"/></clipPath>
+  <text clip-path="url(#clip-${id})" x="-176" y="${y + 54}" font-size="44" font-weight="700" fill="${INK}">${value}</text>`;
+scenes.push(['editor', `
+  <rect width="1080" height="1920" fill="#ffe7a3"/>
+  ${Array.from({ length: 40 }, (_, i) => `<circle cx="${(i * 137) % 1080}" cy="${(i * 211) % 1920}" r="${10 + (i % 4) * 4}" fill="#ffd166" opacity=".7"/>`).join('')}
+  ${phone('fone4', 540, 860, 560, 1000, `
+    <rect x="-280" y="-520" width="560" height="1040" fill="${C.cream}"/>
+    <g id="passoA">
+      <text x="0" y="-360" text-anchor="middle" font-size="48" font-weight="700" fill="${INK}">Escolha o tema</text>
+      ${[['urso', -170, C.sky], ['dino', 0, C.mint], ['coelha', 170, '#ffd1e0']].map(([k, x, bg], i) => `
+        <g transform="translate(${x} -180)"><g id="tema${i}" class="tb" style="transform-origin:center">
+          ${pcs(`<rect x="-75" y="-95" width="150" height="190" rx="22" fill="${bg}"/>`)}
+          <g transform="translate(0 0) scale(.5)">${headSvg(k, 'tm' + i)}</g>
+        </g></g>`).join('')}
+      <g id="check" class="tb" style="transform-origin:center"><g transform="translate(-110 -270)">${pcs(`<circle r="34" fill="#2dbe6c"/>`)}<path d="M-14 0 L-3 12 L16 -12" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+      ${field('f1', 20, 'Nome', 'Theo')}
+      ${field('f2', 170, 'Data', '17 de abril, 16h')}
+      ${field('f3', 320, 'Local', 'Casa Jardim')}
+    </g>
+    <g id="passoC" opacity="0">
+      <rect x="-280" y="-520" width="560" height="560" fill="${C.sky}"/>
+      ${cloud(-150, -380, .5)}${cloud(150, -300, .4)}
+      ${pc(`<path d="M-280 -40 Q0 -110 280 -40 V60 H-280Z" fill="${C.g1}"/>`)}
+      <g transform="translate(0 -40) scale(.62)">${puppet('urso', 'theo4b', { hat: true })}</g>
+      ${pc(`<rect x="-230" y="40" width="460" height="400" rx="34" fill="#fff"/>`)}
+      <text x="0" y="150" text-anchor="middle" font-size="40" font-weight="700" fill="${C.pinkD}">ANIVERSÁRIO</text>
+      <text x="0" y="250" text-anchor="middle" font-size="104" font-weight="700" fill="${C.pinkD}">Theo</text>
+      <text x="0" y="330" text-anchor="middle" font-size="44" font-weight="700" fill="${INK}">5 anos · 17 de abril</text>
+      <g id="link" class="tb" style="transform-origin:center"><g transform="translate(0 395)">${pcs(`<rect x="-170" y="-36" width="340" height="72" rx="36" fill="${C.purple}"/>`)}<text x="0" y="14" text-anchor="middle" font-size="36" font-weight="700" fill="#fff">link exclusivo</text></g></g>
+    </g>
+  `)}
+  <g transform="translate(150 1600) scale(.7)">${puppet('urso', 'theo4')}</g>
+  ${star(880, 380, 46, C.pink, 'est4a')}${star(170, 300, 34, C.purple, 'est4b')}
+  ${caption('cap-editor', 'Tema, nome, data e lugar. Pronto!', 1490)}
+`]);
+
+// 5. Confirmações no chat
+const friend = (i, kind, name, y) => `
+  <g transform="translate(0 ${y})"><g id="msg${i}" class="tb" style="transform-origin:0% 50%">
+    <g transform="translate(-180 0) scale(.36)">${pcs(`<circle r="120" fill="#fff"/>`)}${headSvg(kind, 'av' + i)}</g>
+    ${pcs(`<rect x="-120" y="-56" width="330" height="112" rx="30" fill="#d9fdd3"/>`)}
+    <text x="-96" y="-12" font-size="28" font-weight="600" fill="#2a7a4a">${name}</text>
+    <text x="-96" y="34" font-size="40" font-weight="700" fill="${INK}">Eu vou! ✔</text>
+  </g></g>`;
+scenes.push(['confirmacoes', `
+  <rect width="1080" height="1920" fill="#bfe8d9"/>
+  ${Array.from({ length: 9 }, (_, i) => `<g id="cor${i}" class="tb"><g transform="translate(${80 + i * 115} ${1700 + (i % 3) * 60}) scale(${0.6 + (i % 3) * 0.25})">${pcs(`<path d="M0 0 C -24 -28 -56 -4 -28 24 L0 50 L28 24 C 56 -4 24 -28 0 0Z" fill="${[C.pink, C.red, C.pinkD][i % 3]}"/>`)}</g></g>`).join('')}
+  ${phone('fone5', 470, 860, 560, 1000, `
+    <rect x="-280" y="-520" width="560" height="1040" fill="#efe7dc"/>
+    <rect x="-280" y="-520" width="560" height="150" fill="#2a8a5a"/>
+    <text x="-190" y="-420" font-size="40" font-weight="700" fill="#fff">Festa do Theo</text>
+    <text x="-190" y="-385" font-size="26" font-weight="600" fill="#d9fdd3">4 amigos</text>
+    ${friend(0, 'dino', 'Dino', -250)}${friend(1, 'coelha', 'Coelhinha', -100)}${friend(2, 'leao', 'Leãozinho', 50)}${friend(3, 'baleia', 'Baleia', 200)}
+  `, -5)}
+  <g transform="translate(870 420)"><g id="contador" class="tb" style="transform-origin:center">
+    ${pc(`<circle r="135" fill="${C.yellow}"/>`)}
+    ${[1, 2, 3, 4].map((n) => `<text id="cnt${n}" x="0" y="34" text-anchor="middle" font-size="120" font-weight="700" fill="${INK}" opacity="0">${n}</text>`).join('')}
+    <text x="0" y="86" text-anchor="middle" font-size="30" font-weight="700" fill="${INK}">confirmados</text>
+  </g></g>
+  ${caption('cap-confirmacoes', 'E os amigos foram confirmando!', 1490)}
+`]);
+
+// 6. Festa cheinha
+const balloon = (id, x, y, c, s = 1) => `<g id="${id}" class="tb" style="transform-origin:50% 100%"><g transform="translate(${x} ${y}) scale(${s})">
+  <path d="M0 110 Q-24 230 6 360" fill="none" stroke="${INK}" stroke-width="4"/>
+  ${pc(`<ellipse rx="78" ry="94" fill="${c}"/><path d="M-12 92 L12 92 L0 110 Z" fill="${c}"/>`)}
+  <ellipse cx="-24" cy="-34" rx="15" ry="25" fill="#fff" opacity=".45" transform="rotate(25 -24 -34)"/></g></g>`;
+scenes.push(['festa', `
+  <rect width="1080" height="1920" fill="#ffd6e2"/>
+  <g id="varal" class="tb" style="transform-origin:50% 0%">
+    <path d="M-20 240 Q540 400 1100 240" fill="none" stroke="${INK}" stroke-width="5"/>
+    ${Array.from({ length: 10 }, (_, i) => { const x = 30 + i * 110; const y = 248 + Math.sin(i / 9 * Math.PI) * 70; return pcs(`<path d="M${x} ${y} L${x + 86} ${y + 6} L${x + 43} ${y + 100} Z" fill="${[C.pinkD, C.yellow, C.blue, '#2dbe6c', C.purple][i % 5]}"/>`); }).join('')}
+  </g>
+  ${balloon('bal1', 140, 560, C.yellow, 1)}${balloon('bal2', 940, 520, C.blue, 1.1)}${balloon('bal3', 820, 760, C.pink, .8)}${balloon('bal4', 260, 820, C.purple, .75)}
+  ${pc(`<rect x="0" y="1460" width="1080" height="460" fill="#c98446"/>`)}
+  ${pc(`<rect x="300" y="1240" width="480" height="260" rx="20" fill="#9a5b2c"/>`)}
+  <g transform="translate(540 1250)">
+    ${pc(`<rect x="-150" y="-180" width="300" height="180" rx="24" fill="${C.pink}"/>`)}
+    ${pcs(`<path d="M-150 -150 Q-120 -110 -90 -150 Q-60 -110 -30 -150 Q0 -110 30 -150 Q60 -110 90 -150 Q120 -110 150 -150 V-180 H-150Z" fill="#fff"/>`)}
+    ${pc(`<rect x="-100" y="-300" width="200" height="130" rx="20" fill="${C.cream}"/>`)}
+    ${pcs(`<rect x="-10" y="-380" width="20" height="80" rx="6" fill="${C.blue}"/>`)}
+    <g id="chama" class="tb" style="transform-origin:50% 100%">${pcs(`<path d="M0 -440 Q24 -404 0 -384 Q-24 -404 0 -440Z" fill="${C.orange}"/><path d="M0 -424 Q10 -406 0 -394 Q-10 -406 0 -424Z" fill="${C.yellow}"/>`)}</g>
+  </g>
+  <g transform="translate(150 1640) scale(.8)">${puppet('dino', 'dino6', { hat: true })}</g>
+  <g transform="translate(390 1700) scale(.9)">${puppet('urso', 'theo6', { hat: true })}</g>
+  <g transform="translate(690 1700) scale(.85)">${puppet('coelha', 'coe6')}</g>
+  <g transform="translate(940 1650) scale(.8)">${puppet('leao', 'leo6', { hat: true })}</g>
+  <g id="confete">${Array.from({ length: 44 }, (_, i) => `<g class="conf tb" style="transform-origin:center"><rect x="${(i * 97) % 1080}" y="${-80 - (i * 53) % 400}" width="26" height="14" rx="3" fill="${[C.pinkD, C.yellow, C.blue, '#2dbe6c', C.purple, '#fff'][i % 6]}" transform="rotate(${(i * 37) % 180} ${(i * 97) % 1080} ${-80 - (i * 53) % 400})"/></g>`).join('')}</g>
+  ${caption('cap-festa', 'No grande dia: festa cheinha!', 620)}
+`]);
+
+// 7. Encerramento com marca, preço e chamada
+const LOGO = 'Festa no Link';
+const LCOL = [C.pinkD, C.orange, '#c99000', '#2a9d58', C.blue, null, C.purple, C.pinkD, null, '#2a9d58', C.blue, C.orange, C.purple];
+let lx = -420;
+const letters = LOGO.split('').map((ch, i) => {
+  if (ch === ' ') { lx += 40; return ''; }
+  const x = lx; lx += ch === 'i' ? 44 : 72;
+  return `<g id="let${i}" class="tb" style="transform-origin:50% 100%"><text x="${x}" y="0" font-size="128" font-weight="700" fill="${LCOL[i]}" stroke="#fff" stroke-width="16" paint-order="stroke" filter="url(#pps)">${ch}</text></g>`;
+}).join('');
+scenes.push(['final', `
+  <rect width="1080" height="1920" fill="${C.kraft}"/>
+  <g id="raios7" class="tb" style="transform-origin:center"><g transform="translate(540 760)">
+    ${Array.from({ length: 20 }, (_, i) => `<path d="M0 0 L-80 -1300 L80 -1300 Z" fill="${['#ffcf48', '#ff9ec4', '#9fd8ff', '#b5f0c9'][i % 4]}" opacity=".55" transform="rotate(${i * 18})"/>`).join('')}
+  </g></g>
+  <g transform="translate(540 560)">${letters}</g>
+  <g transform="translate(540 680)"><g id="slogan" class="tb" style="transform-origin:center">
+    ${pc(`<rect x="-300" y="-46" width="600" height="92" rx="14" fill="${C.purple}"/>`)}
+    <text x="0" y="18" text-anchor="middle" font-size="52" font-weight="700" fill="#fff">Convites animados</text>
+  </g></g>
+  <g transform="translate(540 760)"><g id="etiqueta" class="tb" style="transform-origin:50% 0%">
+    <path d="M0 0 L0 90" stroke="${INK}" stroke-width="4"/>
+    ${pc(`<path d="M-200 90 H200 V330 H-200 Z" fill="${C.yellow}"/>`)}
+    <circle cx="0" cy="120" r="12" fill="${C.kraft}"/>
+    <text x="0" y="200" text-anchor="middle" font-size="44" font-weight="600" fill="${INK}">a partir de</text>
+    <text x="0" y="300" text-anchor="middle" font-size="104" font-weight="700" fill="${C.pinkD}">R$ 29,90</text>
+  </g></g>
+  <g transform="translate(540 1230)"><g id="cta" class="tb" style="transform-origin:center">
+    ${pc(`<rect x="-260" y="-70" width="520" height="140" rx="70" fill="${C.pinkD}"/>`)}
+    <text x="0" y="24" text-anchor="middle" font-size="68" font-weight="700" fill="#fff">Faça o seu!</text>
+  </g></g>
+  <g transform="translate(200 1640) scale(.8)">${puppet('urso', 'theo7', { hat: true })}</g>
+  <g transform="translate(880 1640) scale(.8)">${puppet('dino', 'dino7', { hat: true })}</g>
+`]);
+
+/* ---------- Montagem do palco ---------- */
+palco.innerHTML = `
+<defs>
+  <filter id="pp" x="-20%" y="-20%" width="140%" height="150%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="4" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feDropShadow in="d" dx="0" dy="8" stdDeviation="5" flood-color="#3b2a14" flood-opacity="0.38"/>
+  </filter>
+  <filter id="pps" x="-20%" y="-20%" width="140%" height="150%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="9" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feDropShadow in="d" dx="0" dy="4" stdDeviation="2.5" flood-color="#3b2a14" flood-opacity="0.35"/>
+  </filter>
+  <filter id="grao" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" seed="2"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.25  0 0 0 0 0.12  0 0 0 0.55 0"/>
+  </filter>
+  <filter id="fibras" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.18" numOctaves="2" seed="5"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.35 0"/>
+  </filter>
+  <radialGradient id="vinheta" cx="50%" cy="45%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#2a1a0a" stop-opacity=".35"/></radialGradient>
+</defs>
+<rect width="1080" height="1920" fill="${C.kraft}"/>
+<clipPath id="quadro"><rect width="1080" height="1920"/></clipPath>
+${scenes.map(([id, svg]) => `<g id="sc-${id}" class="tb" style="transform-origin:50% 100%"><g clip-path="url(#quadro)"><g class="boil">${svg}</g></g></g>`).join('')}
+<rect width="1080" height="1920" filter="url(#grao)" opacity=".5" style="mix-blend-mode:multiply"/>
+<rect width="1080" height="1920" filter="url(#fibras)" opacity=".25"/>
+<rect width="1080" height="1920" fill="url(#vinheta)"/>
+`;
+
+/* =====================================================================
+   ANIMAÇÕES (Web Animations API, pausadas; seek(t) posiciona o tempo)
+   ===================================================================== */
+const anims = [];
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+function A(target, keyframes, start, dur, opts = {}) {
+  const els = typeof target === 'string' ? $$(target) : [target];
+  for (const el of els) {
+    if (!el) continue;
+    const a = el.animate(keyframes, { duration: dur * 1000, delay: start * 1000, fill: opts.fill || 'both', easing: opts.easing || 'ease-in-out', iterations: opts.iterations || 1, composite: opts.composite || 'replace' });
+    a.pause();
+    anims.push(a);
+  }
+}
+const BACK = 'cubic-bezier(.34,1.56,.64,1)';
+// Repetições não se aplicam antes do início (fill forwards), para não cobrir entradas.
+const loop = (sel, kf, start, period, end) => A(sel, kf, start, period, { iterations: Math.max(1, Math.ceil((end - start) / period)), fill: 'forwards' });
+
+// Entrada/saída de cada cena: a folha de papel do cenário desliza com leve rotação.
+TL.scenes.forEach((s, i) => {
+  const first = i === 0, last = i === TL.scenes.length - 1;
+  const total = s.end + 0.6 - (s.start - 0.01);
+  const enterEnd = first ? 0.001 : 0.55 / total;
+  const exitStart = last ? 0.999 : (s.end - 0.3 - (s.start - 0.01)) / total;
+  const kf = [
+    { offset: 0, transform: first ? 'none' : 'translateX(1250px) rotate(6deg)' },
+    { offset: enterEnd, transform: 'translateX(0) rotate(0deg)', easing: 'ease-in-out' },
+    { offset: Math.max(enterEnd + 0.001, exitStart), transform: 'translateX(0) rotate(0deg)', easing: 'cubic-bezier(.6,0,.8,.4)' },
+    { offset: 1, transform: last ? 'translateX(0) rotate(0deg)' : 'translateX(-1250px) rotate(-6deg)' },
+  ];
+  kf[0].easing = 'cubic-bezier(.2,.9,.25,1.05)';
+  A(`#sc-${s.id}`, kf, s.start - 0.01, total, { easing: 'linear' }); // easing por trecho, não global
+});
+
+// Legendas: entram pulando quando a narração começa e saem antes da troca de cena.
+TL.scenes.forEach((s) => {
+  const el = $(`#cap-${s.id}`);
+  if (!el) return;
+  A(el, [{ transform: 'scale(0) rotate(-8deg)', opacity: 0 }, { transform: 'scale(1) rotate(-2deg)', opacity: 1 }], s.vo + 0.15, 0.4, { easing: BACK });
+});
+
+// Piscar (todos os olhos) e respiração leve
+$$('[id$="-eyes"]').forEach((el, i) => A(el, [{ transform: 'scaleY(1)' }, { offset: .92, transform: 'scaleY(1)' }, { offset: .96, transform: 'scaleY(.1)' }, { transform: 'scaleY(1)' }], (i % 5) * 0.4, 3.2, { iterations: 30, easing: 'linear' }));
+
+const wave = (sel, start, end, speed = 0.55) => loop(sel, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-150deg)' }, { transform: 'rotate(-118deg)' }, { transform: 'rotate(-150deg)' }, { transform: 'rotate(0deg)' }], start, speed * 4, end);
+const bounce = (sel, start, end, h = 30, period = 0.6) => loop(sel, [{ transform: 'translateY(0)' }, { transform: `translateY(-${h}px)`, easing: 'ease-in' }, { transform: 'translateY(0)' }], start, period, end);
+
+// --- Cena 1
+{
+  const s = SC.theo;
+  A('#theo1', [{ transform: 'translateX(-760px) translateY(0)' }, { transform: 'translateX(-380px) translateY(-110px)' }, { transform: 'translateX(-190px) translateY(0)' }, { transform: 'translateX(-60px) translateY(-60px)' }, { transform: 'translateX(0) translateY(0)' }], s.start + 0.2, 1.3, { easing: 'ease-out' });
+  wave('#theo1-armR', s.vo + 0.5, s.end);
+  loop('#theo1-head', [{ transform: 'rotate(-4deg)' }, { transform: 'rotate(4deg)' }, { transform: 'rotate(-4deg)' }], s.start, 1.6, s.end);
+  loop('#sol', [{ transform: 'rotate(0deg)' }, { transform: 'rotate(30deg)' }], s.start, 4, s.end + 1);
+  loop('#nuv1', [{ transform: 'translateX(0)' }, { transform: 'translateX(60px)' }, { transform: 'translateX(0)' }], s.start, 5, s.end + 1);
+  loop('#nuv2', [{ transform: 'translateX(0)' }, { transform: 'translateX(-50px)' }, { transform: 'translateX(0)' }], s.start, 6, s.end + 1);
+  A('#cal', [{ transform: 'rotate(-30deg) scale(0)' }, { transform: 'rotate(0deg) scale(1)' }], s.vo + 1.6, 0.6, { easing: BACK });
+  loop('#balao1', [{ transform: 'translateY(0) rotate(-4deg)' }, { transform: 'translateY(-26px) rotate(4deg)' }, { transform: 'translateY(0) rotate(-4deg)' }], s.start, 2.4, s.end + 1);
+}
+// --- Cena 2
+{
+  const s = SC.papel, d = s.dur;
+  const voa = s.vo + d * 0.38, molha = s.vo + d * 0.53, ninguem = s.vo + d * 0.68;
+  A('#nuvemchuva', [{ transform: 'translateX(-700px)' }, { transform: 'translateX(0)' }], s.start + 0.2, 1.2, { easing: 'ease-out' });
+  A('#gotas', [{ opacity: 0 }, { opacity: 1 }], molha - 0.4, 0.3);
+  loop('#gotas', [{ transform: 'translateY(0)' }, { transform: 'translateY(90px)' }], molha - 0.4, 0.42, s.end + 1);
+  [['#env1', 520, -900, 420], ['#env2', 700, -760, -380], ['#env3', 300, -1050, 260]].forEach(([sel, dx, dy, rot], i) =>
+    A(sel, [{ transform: 'translate(0,0) rotate(0deg)' }, { offset: .3, transform: `translate(${dx * 0.25}px, ${dy * 0.15}px) rotate(${rot * 0.2}deg)` }, { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)` }], voa + i * 0.12, 1.3, { easing: 'ease-in' }));
+  A('#theo2-armR', [{ transform: 'rotate(-60deg)' }, { transform: 'rotate(-60deg)' }, { transform: 'rotate(-130deg)' }, { transform: 'rotate(-20deg)' }], s.start, voa - s.start + 0.6);
+  A('#theo2-smile', [{ opacity: 1 }, { opacity: 0 }], ninguem - 0.2, 0.2);
+  A('#theo2-frown', [{ opacity: 0 }, { opacity: 1 }], ninguem - 0.2, 0.2);
+  A('#theo2-head', [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-10deg) translateY(10px)' }], ninguem, 0.5);
+  A('#bolha0', [{ transform: 'scale(0) rotate(-10deg)' }, { transform: 'scale(1) rotate(0deg)' }], ninguem, 0.45, { easing: BACK });
+}
+// --- Cena 3
+{
+  const s = SC.descoberta, d = s.dur;
+  const pop = s.vo + d * 0.45;
+  loop('#raios', [{ transform: 'rotate(0deg)' }, { transform: 'rotate(22.5deg)' }], s.start, 2.5, s.end + 1);
+  A('#fone3', [{ transform: 'translateY(1400px) rotate(12deg) scale(.8)' }, { transform: 'translateY(0) rotate(-3deg) scale(1)' }], pop - 0.25, 0.7, { easing: BACK });
+  for (let i = 0; i < 6; i++) loop(`#est${i}`, [{ transform: 'scale(.4) rotate(0deg)' }, { transform: 'scale(1.15) rotate(20deg)' }, { transform: 'scale(.4) rotate(0deg)' }], s.start + i * 0.15, 1.1, s.end + 1);
+  bounce('#theo3', pop, s.end, 70, 0.5);
+  A('#theo3-armL', [{ transform: 'rotate(0deg)' }, { transform: 'rotate(150deg)' }], pop, 0.3);
+  A('#theo3-armR', [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-150deg)' }], pop, 0.3);
+}
+// --- Cena 4
+{
+  const s = SC.editor, d = s.dur;
+  const sel = s.vo + d * 0.16, f1 = s.vo + d * 0.28, f2 = s.vo + d * 0.38, f3 = s.vo + d * 0.48, pronto = s.vo + d * 0.6;
+  A('#fone4', [{ transform: 'scale(.6) rotate(-8deg)' }, { transform: 'scale(1) rotate(0deg)' }], s.start + 0.2, 0.6, { easing: BACK });
+  A('#tema0', [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1.08)' }], sel, 0.4, { easing: BACK });
+  A('#check', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], sel + 0.1, 0.35, { easing: BACK });
+  A('#tema1', [{ opacity: 1 }, { opacity: 0.45 }], sel, 0.3);
+  A('#tema2', [{ opacity: 1 }, { opacity: 0.45 }], sel, 0.3);
+  [['#f1-mask', f1], ['#f2-mask', f2], ['#f3-mask', f3]].forEach(([m, t]) => A(m, [{ width: '0px' }, { width: '370px' }], t, 0.7, { easing: 'steps(12)' }));
+  A('#passoA', [{ opacity: 1 }, { opacity: 0 }], pronto - 0.2, 0.3);
+  A('#passoC', [{ opacity: 0, transform: 'scale(.9)' }, { opacity: 1, transform: 'scale(1)' }], pronto - 0.1, 0.45, { easing: BACK });
+  wave('#theo4b-armR', pronto + 0.2, s.end);
+  A('#link', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], pronto + 0.7, 0.4, { easing: BACK });
+  wave('#theo4-armR', s.start + 0.6, s.end, 0.5);
+  loop('#est4a', [{ transform: 'scale(.6) rotate(0)' }, { transform: 'scale(1.1) rotate(25deg)' }, { transform: 'scale(.6) rotate(0)' }], s.start, 1.3, s.end + 1);
+  loop('#est4b', [{ transform: 'scale(.6) rotate(0)' }, { transform: 'scale(1.1) rotate(-25deg)' }, { transform: 'scale(.6) rotate(0)' }], s.start + 0.4, 1.3, s.end + 1);
+}
+// --- Cena 5
+{
+  const s = SC.confirmacoes, d = s.dur;
+  const marks = [0.12, 0.32, 0.52, 0.72].map((f) => s.vo + d * f);
+  A('#contador', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], s.start + 0.3, 0.4, { easing: BACK });
+  marks.forEach((t, i) => {
+    A(`#msg${i}`, [{ transform: 'scale(0) translateX(-60px)', opacity: 0 }, { transform: 'scale(1) translateX(0)', opacity: 1 }], t, 0.4, { easing: BACK });
+    A(`#cnt${i + 1}`, [{ opacity: 0 }, { opacity: 1 }], t, 0.05);
+    if (i < 3) A(`#cnt${i + 1}`, [{ opacity: 1 }, { opacity: 0 }], marks[i + 1], 0.05, { fill: 'forwards' });
+    A('#contador', [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], t, 0.35, { easing: BACK, fill: 'forwards' });
+  });
+  for (let i = 0; i < 9; i++) loop(`#cor${i}`, [{ transform: 'translateY(0)', opacity: 0 }, { offset: .2, opacity: 1 }, { transform: 'translateY(-900px)', opacity: 0 }], s.start + i * 0.3, 3.2, s.end + 1);
+}
+// --- Cena 6
+{
+  const s = SC.festa;
+  [['#theo6', 0], ['#dino6', 0.15], ['#coe6', 0.3], ['#leo6', 0.45]].forEach(([sel, off]) => {
+    bounce(sel, s.start + 0.4 + off, s.end + 1, 50, 0.55);
+    wave(`${sel}-armR`, s.start + 0.5 + off, s.end + 1, 0.45);
+  });
+  A('#theo6-armL', [{ transform: 'rotate(0)' }, { transform: 'rotate(150deg)' }], s.start + 0.5, 0.3);
+  ['#bal1', '#bal2', '#bal3', '#bal4'].forEach((b, i) => loop(b, [{ transform: 'translateY(0) rotate(-5deg)' }, { transform: 'translateY(-40px) rotate(5deg)' }, { transform: 'translateY(0) rotate(-5deg)' }], s.start + i * 0.3, 2 + i * 0.3, s.end + 1));
+  loop('#varal', [{ transform: 'rotate(-1.5deg)' }, { transform: 'rotate(1.5deg)' }, { transform: 'rotate(-1.5deg)' }], s.start, 2.2, s.end + 1);
+  loop('#chama', [{ transform: 'scale(1,1)' }, { transform: 'scale(.85,1.15)' }, { transform: 'scale(1,1)' }], s.start, 0.35, s.end + 1);
+  $$('.conf').forEach((el, i) => A(el, [{ transform: 'translateY(0) rotate(0deg)' }, { transform: `translateY(${2200 + (i % 5) * 120}px) rotate(${(i % 2 ? 1 : -1) * (300 + i * 20)}deg)` }], s.start + 0.3 + (i % 11) * 0.12, 3.2 + (i % 4) * 0.4, { easing: 'linear' }));
+  $$('#coe6-ear').forEach((el) => loop(el, [{ transform: 'rotate(0)' }, { transform: 'rotate(-18deg)' }, { transform: 'rotate(0)' }], s.start, 0.9, s.end + 1));
+}
+// --- Cena 7
+{
+  const s = SC.final;
+  $$('[id^="let"]').forEach((el, i) => A(el, [{ transform: 'translateY(-900px) rotate(-20deg)' }, { offset: .7, transform: 'translateY(20px) rotate(4deg)' }, { transform: 'translateY(0) rotate(0deg)' }], s.start + 0.35 + i * 0.07, 0.7, { easing: 'ease-out' }));
+  A('#slogan', [{ transform: 'scale(0) rotate(-6deg)' }, { transform: 'scale(1) rotate(-2deg)' }], s.vo + 0.9, 0.45, { easing: BACK });
+  A('#etiqueta', [{ transform: 'translateY(-1100px) rotate(0)' }, { offset: .5, transform: 'translateY(0) rotate(14deg)' }, { offset: .75, transform: 'rotate(-8deg)' }, { transform: 'rotate(3deg)' }], s.vo + 1.6, 1.4, { easing: 'ease-out' });
+  A('#cta', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], s.vo + 3.2, 0.45, { easing: BACK });
+  loop('#cta', [{ transform: 'scale(1)' }, { transform: 'scale(1.07)' }, { transform: 'scale(1)' }], s.vo + 3.7, 0.9, s.end + 1);
+  loop('#raios7', [{ transform: 'rotate(0)' }, { transform: 'rotate(18deg)' }], s.start, 3, s.end + 1);
+  wave('#theo7-armR', s.start + 0.8, s.end + 1);
+  wave('#dino7-armR', s.start + 1.0, s.end + 1, 0.5);
+  bounce('#theo7', s.start + 0.6, s.end + 1, 26, 0.7);
+  bounce('#dino7', s.start + 0.9, s.end + 1, 26, 0.7);
+}
+
+/* ---------- Tremidinho de stop-motion (muda a cada quadro desenhado) ---------- */
+const boils = $$('.boil');
+function rand(seed) { const x = Math.sin(seed * 127.1) * 43758.5453; return x - Math.floor(x); }
+window.seek = (t, frame) => {
+  for (const a of anims) a.currentTime = t * 1000;
+  boils.forEach((b, i) => {
+    const r = (rand(frame * 7.3 + i) - 0.5) * 0.5;
+    const x = (rand(frame * 3.1 + i * 9) - 0.5) * 3;
+    const y = (rand(frame * 5.7 + i * 4) - 0.5) * 3;
+    b.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${r.toFixed(3)} 540 960)`);
+  });
+};
+window.READY = document.fonts.ready.then(() => document.fonts.load('700 40px Fredoka')).then(() => true);
+</script>
+</body>
+</html>

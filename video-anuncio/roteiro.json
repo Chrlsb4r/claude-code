@@ -1,0 +1,22 @@
+{
+  "titulo": "Festa no Link — O convite do Theo",
+  "formato": "Vertical 1080x1920 (Reels, Stories, TikTok)",
+  "voz": { "voice_id": "cgSgspJ2msm6clMCkdW9", "nome": "Jessica (ElevenLabs, multilíngue)", "modelo": "eleven_multilingual_v2" },
+  "cenas": [
+    { "id": "theo", "fala": "Esse é o Theo. Ele ia fazer cinco anos... e queria chamar todos os amigos!", "legenda": "O Theo vai fazer 5 anos!" },
+    { "id": "papel", "fala": "Mas convite de papel? Voa, molha... e ninguém confirma.", "legenda": "Convite de papel? Voa, molha..." },
+    { "id": "descoberta", "fala": "Até que o Theo descobriu o Festa no Link!", "legenda": "Até que ele descobriu o Festa no Link!" },
+    { "id": "editor", "fala": "Escolheu o tema, colocou o nome, a data e o lugar... e pronto: um convite animado, com um link só dele.", "legenda": "Tema, nome, data e lugar. Pronto!" },
+    { "id": "confirmacoes", "fala": "Mandou no WhatsApp, e os amigos foram confirmando, um por um.", "legenda": "E os amigos foram confirmando!" },
+    { "id": "festa", "fala": "E no grande dia... a festa estava cheinha!", "legenda": "No grande dia: festa cheinha!" },
+    { "id": "final", "fala": "Festa no Link. Convites animados a partir de vinte e nove e noventa. Faça o seu!", "legenda": "Convites animados a partir de R$ 29,90" }
+  ],
+  "efeitos": {
+    "swoosh": { "texto": "quick paper cutout swoosh, sheet of craft paper sliding across a table", "duracao": 0.8 },
+    "vento": { "texto": "gust of wind blowing loose paper sheets away, papers fluttering", "duracao": 2.0 },
+    "brilho": { "texto": "magical sparkle chime, bright glittering twinkle", "duracao": 1.5 },
+    "pop": { "texto": "single cute bubbly pop, notification pop sound, short", "duracao": 0.5 },
+    "festa": { "texto": "kids party celebration, party horn and confetti popper burst, cheerful", "duracao": 2.5 },
+    "tecla": { "texto": "soft phone keyboard typing taps, short", "duracao": 1.2 }
+  }
+}
