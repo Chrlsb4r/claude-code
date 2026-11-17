@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Great+Vibes&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #2b1d6b; }
+  svg { display: block; }
+  text { font-family: Fredoka, sans-serif; }
+  .tb { transform-box: fill-box; }
+</style>
+</head>
+<body>
+<svg id="palco" width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+/* =====================================================================
+   Anúncio "O baile da princesinha Helena" — estilo animação de conto de fadas.
+   Personagens e cenários ORIGINAIS (sem personagens/marcas de terceiros).
+   Linha do tempo controlada por seek(t) (Web Animations API pausada).
+   ===================================================================== */
+const TL = window.TIMELINE;
+const SC = Object.fromEntries(TL.scenes.map((s) => [s.id, s]));
+const palco = document.getElementById('palco');
+const INK = '#3b1f3f';
+const GOLD = '#f5c84c';
+let uid = 0;
+const nid = (p) => `${p}${++uid}`;
+
+/* ---------- Brilhos ---------- */
+const spark = (x, y, r, fill = '#fff', id = '', glow = true) =>
+  `<g ${id ? `id="${id}"` : ''} class="tb" style="transform-origin:center" ${glow ? 'filter="url(#glow)"' : ''}><path d="M${x} ${y - r} Q${x + r * 0.18} ${y - r * 0.18} ${x + r} ${y} Q${x + r * 0.18} ${y + r * 0.18} ${x} ${y + r} Q${x - r * 0.18} ${y + r * 0.18} ${x - r} ${y} Q${x - r * 0.18} ${y - r * 0.18} ${x} ${y - r}Z" fill="${fill}"/></g>`;
+
+function skyDusk(id) {
+  return `<rect width="1080" height="1920" fill="url(#gSky)"/>
+    ${Array.from({ length: 34 }, (_, i) => spark((i * 211) % 1060 + 10, (i * 137) % 900 + 40, 4 + (i % 4) * 3, i % 5 ? '#fff' : '#ffe9a8', `${id}-ceu${i}`, i % 3 === 0)).join('')}`;
+}
+
+function moon(x, y, r) {
+  return `<circle cx="${x}" cy="${y}" r="${r * 2.4}" fill="url(#gMoonGlow)"/>
+    <circle cx="${x}" cy="${y}" r="${r}" fill="#fff6d8"/>
+    <circle cx="${x - r * 0.3}" cy="${y - r * 0.15}" r="${r * 0.18}" fill="#f1e2b8" opacity=".6"/>
+    <circle cx="${x + r * 0.25}" cy="${y + r * 0.3}" r="${r * 0.12}" fill="#f1e2b8" opacity=".6"/>`;
+}
+
+/* ---------- Castelo original ---------- */
+function castle(id, cx, base, s = 1) {
+  const tower = (x, w, top, flagId) => `
+    <rect x="${x}" y="${top}" width="${w}" height="${base - top}" fill="url(#gCastle)"/>
+    <rect x="${x}" y="${top}" width="${w * 0.25}" height="${base - top}" fill="#fff" opacity=".12"/>
+    <path d="M${x - 12} ${top + 2} L${x + w / 2} ${top - w * 1.25} L${x + w + 12} ${top + 2} Z" fill="url(#gRoof)"/>
+    <circle cx="${x + w / 2}" cy="${top - w * 1.25}" r="7" fill="${GOLD}"/>
+    <line x1="${x + w / 2}" y1="${top - w * 1.25}" x2="${x + w / 2}" y2="${top - w * 1.25 - 70}" stroke="${GOLD}" stroke-width="4"/>
+    <g id="${flagId}" class="tb" style="transform-origin:0% 50%"><path d="M${x + w / 2} ${top - w * 1.25 - 70} l60 14 l-60 16 z" fill="#ff6fae"/></g>
+    ${win(x + w / 2, top + 70, w * 0.22)}`;
+  const win = (x, y, r) => `<g filter="url(#glow)"><path d="M${x - r} ${y + r * 2.2} V${y} A${r} ${r} 0 0 1 ${x + r} ${y} V${y + r * 2.2} Z" fill="#ffe48a"/></g>`;
+  return `<g id="${id}" class="tb" style="transform-origin:50% 100%"><g transform="translate(${cx} ${base}) scale(${s}) translate(${-cx} ${-base})">
+    ${tower(cx - 330, 110, base - 520, `${id}-f1`)}${tower(cx + 220, 110, base - 520, `${id}-f2`)}
+    ${tower(cx - 200, 80, base - 420, `${id}-f3`)}${tower(cx + 120, 80, base - 420, `${id}-f4`)}
+    <rect x="${cx - 270}" y="${base - 330}" width="540" height="330" fill="url(#gCastle)"/>
+    ${Array.from({ length: 12 }, (_, i) => `<rect x="${cx - 270 + i * 46}" y="${base - 356}" width="28" height="30" fill="url(#gCastle)"/>`).join('')}
+    ${tower(cx - 90, 180, base - 640, `${id}-f5`)}
+    <path d="M${cx - 70} ${base} V${base - 120} A70 70 0 0 1 ${cx + 70} ${base - 120} V${base} Z" fill="#5b2f8a" stroke="${GOLD}" stroke-width="6"/>
+    ${win(cx - 180, base - 250, 22)}${win(cx + 180, base - 250, 22)}${win(cx - 120, base - 250, 18)}${win(cx + 120, base - 250, 18)}
+  </g></g>`;
+}
+
+/* ---------- Princesa original (Helena) — origem nos pés ---------- */
+function princess(id, { wand = true } = {}) {
+  const skin = 'url(#gSkin)';
+  return `<g id="${id}" class="tb" style="transform-origin:50% 100%">
+    <ellipse cx="0" cy="4" rx="150" ry="18" fill="#000" opacity=".18"/>
+    <g filter="url(#soft)">
+    <g id="${id}-hairB" class="tb" style="transform-origin:50% 0%">
+      ${[[0, -450, 112], [-92, -385, 64], [92, -385, 64], [-104, -315, 52], [104, -315, 52], [-86, -255, 40], [86, -255, 40]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#gHair)"/>`).join('')}
+    </g>
+    <g id="${id}-skirt" class="tb" style="transform-origin:50% 0%">
+      <path d="M-62 -250 C -112 -200 -172 -92 -178 -10 Q -120 16 -60 4 Q 0 20 60 4 Q 120 16 178 -10 C 172 -92 112 -200 62 -250 Z" fill="url(#gDress)"/>
+      <path d="M-30 -250 C -50 -180 -70 -82 -78 0 Q 0 16 78 0 C 70 -82 50 -180 30 -250Z" fill="url(#gDressLight)" opacity=".85"/>
+      <path d="M-178 -10 Q -120 16 -60 4 Q 0 20 60 4 Q 120 16 178 -10" fill="none" stroke="${GOLD}" stroke-width="8" stroke-linecap="round"/>
+      ${[[-110, -70], [-60, -150], [90, -100], [40, -40], [-20, -90], [130, -40]].map(([x, y], i) => spark(x, y, 9, '#fff', `${id}-brilho${i}`, false)).join('')}
+    </g>
+    <g id="${id}-armL" class="tb" style="transform-origin:50% 6%">
+      <g transform="rotate(14 -76 -352)"><rect x="-90" y="-352" width="28" height="122" rx="14" fill="${skin}"/><circle cx="-76" cy="-232" r="17" fill="${skin}"/></g>
+    </g>
+    <path d="M-62 -250 L-52 -350 Q0 -372 52 -350 L62 -250 Q0 -236 -62 -250Z" fill="url(#gBodice)"/>
+    <rect x="-64" y="-262" width="128" height="14" rx="7" fill="${GOLD}"/>
+    <circle cx="-62" cy="-345" r="34" fill="url(#gSleeve)"/><circle cx="62" cy="-345" r="34" fill="url(#gSleeve)"/>
+    <g id="${id}-armR" class="tb" style="transform-origin:50% 4%">
+      <g transform="rotate(-14 76 -352)"><rect x="62" y="-352" width="28" height="122" rx="14" fill="${skin}"/><circle cx="76" cy="-232" r="17" fill="${skin}"/></g>
+      ${wand ? `<line x1="100" y1="-238" x2="160" y2="-160" stroke="${GOLD}" stroke-width="8" stroke-linecap="round"/>
+        <g id="${id}-estrela">${spark(165, -152, 26, '#fff3b0', '', true)}</g>` : ''}
+    </g>
+    <rect x="-15" y="-386" width="30" height="44" fill="${skin}"/>
+    <circle cx="-90" cy="-446" r="15" fill="${skin}"/><circle cx="90" cy="-446" r="15" fill="${skin}"/>
+    <circle cx="0" cy="-452" r="92" fill="${skin}"/>
+    <ellipse cx="-58" cy="-412" rx="17" ry="9" fill="#ff8fb0" opacity=".55"/><ellipse cx="58" cy="-412" rx="17" ry="9" fill="#ff8fb0" opacity=".55"/>
+    <g id="${id}-eyes" class="tb" style="transform-origin:center">
+      ${[-34, 34].map((x) => `<ellipse cx="${x}" cy="-442" rx="18" ry="24" fill="#3b1f14"/><ellipse cx="${x}" cy="-434" rx="12" ry="12" fill="#7a4a2a" opacity=".7"/>
+        <circle cx="${x + 6}" cy="-452" r="7" fill="#fff"/><circle cx="${x - 6}" cy="-430" r="3.5" fill="#fff"/>
+        <path d="M${x + (x < 0 ? -18 : 18)} -458 l${x < 0 ? -9 : 9} -8 M${x + (x < 0 ? -12 : 12)} -464 l${x < 0 ? -5 : 5} -10" stroke="#3b1f14" stroke-width="4" stroke-linecap="round"/>`).join('')}
+    </g>
+    <path d="M-48 -480 Q-34 -490 -20 -482 M20 -482 Q34 -490 48 -480" fill="none" stroke="#5a3020" stroke-width="5" stroke-linecap="round"/>
+    <path d="M-5 -418 Q0 -413 5 -418" fill="none" stroke="#b9775a" stroke-width="4" stroke-linecap="round"/>
+    <path id="${id}-smile" d="M-20 -400 Q0 -378 20 -400 Q0 -390 -20 -400Z" fill="#c2405c"/>
+    <ellipse id="${id}-worry" cx="0" cy="-394" rx="9" ry="11" fill="#c2405c" opacity="0"/>
+    <path d="M-94 -462 Q-92 -552 0 -554 Q92 -552 94 -462 Q74 -506 42 -492 Q20 -526 -10 -500 Q-42 -526 -62 -490 Q-82 -500 -94 -462Z" fill="url(#gHair)"/>
+    <path d="M-92 -476 Q-126 -404 -108 -336 Q-126 -306 -100 -282 Q-84 -302 -88 -334 Q-74 -404 -78 -462 Z" fill="url(#gHair)"/><path d="M92 -476 Q126 -404 108 -336 Q126 -306 100 -282 Q84 -302 88 -334 Q74 -404 78 -462 Z" fill="url(#gHair)"/>
+    <g id="${id}-tiara">
+      <path d="M-52 -532 L-38 -568 L-19 -542 L0 -586 L19 -542 L38 -568 L52 -532 Q0 -520 -52 -532Z" fill="url(#gGold)" stroke="#c99517" stroke-width="2"/>
+      <circle cx="0" cy="-556" r="9" fill="#ff4f9a"/><circle cx="-38" cy="-552" r="5" fill="#9ad8ff"/><circle cx="38" cy="-552" r="5" fill="#9ad8ff"/>
+      ${spark(10, -590, 12, '#fff', `${id}-glint`, true)}
+    </g>
+    </g>
+  </g>`;
+}
+
+/* ---------- Amiguinhos com coroa (animais originais da loja) ---------- */
+function crown(y, s = 1) {
+  return `<g transform="translate(0 ${y}) scale(${s})"><path d="M-38 0 L-30 -34 L-14 -14 L0 -42 L14 -14 L30 -34 L38 0Z" fill="url(#gGold)" stroke="#c99517" stroke-width="2"/><circle cx="0" cy="-20" r="6" fill="#ff4f9a"/></g>`;
+}
+function animalHead(kind, id) {
+  const eyes = `<g id="${id}-eyes" class="tb" style="transform-origin:center"><ellipse cx="-30" cy="-10" rx="11" ry="15" fill="${INK}"/><ellipse cx="30" cy="-10" rx="11" ry="15" fill="${INK}"/><circle cx="-26" cy="-16" r="4.5" fill="#fff"/><circle cx="34" cy="-16" r="4.5" fill="#fff"/></g>`;
+  const cheeks = `<ellipse cx="-52" cy="14" rx="13" ry="8" fill="#ff8fb0" opacity=".6"/><ellipse cx="52" cy="14" rx="13" ry="8" fill="#ff8fb0" opacity=".6"/>`;
+  const smile = `<path d="M-14 22 Q0 34 14 22" fill="none" stroke="${INK}" stroke-width="5" stroke-linecap="round"/>`;
+  const shine = `<ellipse cx="-28" cy="-46" rx="34" ry="20" fill="#fff" opacity=".22"/>`;
+  if (kind === 'urso') return `<circle cx="-56" cy="-58" r="28" fill="#c98446"/><circle cx="56" cy="-58" r="28" fill="#c98446"/><circle cx="-56" cy="-58" r="14" fill="#f3d3a8"/><circle cx="56" cy="-58" r="14" fill="#f3d3a8"/>
+    <circle r="80" fill="url(#gBear)"/><ellipse cx="0" cy="20" rx="38" ry="28" fill="#f3d3a8"/><ellipse cx="0" cy="8" rx="12" ry="9" fill="${INK}"/>${eyes}${cheeks}${smile}${shine}${crown(-72, 0.9)}`;
+  if (kind === 'coelha') return `<ellipse cx="-30" cy="-120" rx="22" ry="64" fill="#fff"/><ellipse cx="30" cy="-120" rx="22" ry="64" fill="#fff"/><ellipse cx="-30" cy="-118" rx="10" ry="46" fill="#ffb3cb"/><ellipse cx="30" cy="-118" rx="10" ry="46" fill="#ffb3cb"/>
+    <circle r="78" fill="url(#gBunny)"/><ellipse cx="0" cy="10" rx="9" ry="7" fill="#ff7aa2"/>${eyes}${cheeks}${smile}${shine}${crown(-70, 0.85)}`;
+  if (kind === 'dino') return `${[-50, -10, 30].map((x) => `<path d="M${x} -70 l20 -38 l20 38z" fill="#ff8a3d"/>`).join('')}
+    <ellipse rx="90" ry="76" fill="url(#gDino)"/><ellipse cx="8" cy="30" rx="50" ry="26" fill="#c9efa0"/>${eyes}${cheeks}${smile}${shine}${crown(-72, 0.9)}`;
+  if (kind === 'baleia') return `<path d="M-90 16 Q-90 -74 0 -76 Q82 -76 88 8 Q82 78 0 78 Q-88 78 -90 16Z" fill="url(#gWhale)"/><path d="M-78 38 Q0 68 80 38 Q66 74 0 74 Q-66 74 -78 38Z" fill="#d6f1ff"/>${eyes}${cheeks}${smile}${shine}${crown(-74, 0.85)}`;
+}
+const BODIES = { urso: '#c98446', coelha: '#ff9ec9', dino: '#5bcb6e' };
+function friend(kind, id) {
+  return `<g id="${id}" class="tb" style="transform-origin:50% 100%">
+    <ellipse cx="0" cy="2" rx="90" ry="12" fill="#000" opacity=".15"/>
+    <ellipse cx="-32" cy="-16" rx="30" ry="18" fill="${BODIES[kind]}"/><ellipse cx="32" cy="-16" rx="30" ry="18" fill="${BODIES[kind]}"/>
+    <g id="${id}-armL" class="tb" style="transform-origin:50% 8%"><rect x="-96" y="-160" width="36" height="96" rx="18" fill="${BODIES[kind]}" transform="rotate(16 -78 -160)"/></g>
+    <ellipse cx="0" cy="-100" rx="74" ry="80" fill="${BODIES[kind]}"/><ellipse cx="0" cy="-90" rx="44" ry="48" fill="#fff" opacity=".35"/>
+    <g id="${id}-armR" class="tb" style="transform-origin:50% 8%"><rect x="60" y="-160" width="36" height="96" rx="18" fill="${BODIES[kind]}" transform="rotate(-16 78 -160)"/></g>
+    <g transform="translate(0 -240)">${animalHead(kind, id + 'h')}</g>
+  </g>`;
+}
+
+/* ---------- Faixa de fita (legenda) ---------- */
+function ribbon(id, text, cy) {
+  if (!text) return '';
+  const w = Math.min(980, 120 + text.length * 29);
+  return `<g transform="translate(540 ${cy})"><g id="${id}" class="tb" style="transform-origin:center">
+    <path d="M${-w / 2 - 70} -30 L${-w / 2 + 10} -30 L${-w / 2 + 10} 50 L${-w / 2 - 70} 50 L${-w / 2 - 40} 10 Z" fill="#a8164f"/>
+    <path d="M${w / 2 + 70} -30 L${w / 2 - 10} -30 L${w / 2 - 10} 50 L${w / 2 + 70} 50 L${w / 2 + 40} 10 Z" fill="#a8164f"/>
+    <path d="M${-w / 2} -50 Q0 -64 ${w / 2} -50 L${w / 2} 40 Q0 26 ${-w / 2} 40 Z" fill="url(#gRibbon)" filter="url(#soft)"/>
+    <path d="M${-w / 2 + 14} -38 Q0 -52 ${w / 2 - 14} -38" fill="none" stroke="${GOLD}" stroke-width="3" opacity=".9"/>
+    <path d="M${-w / 2 + 14} 28 Q0 14 ${w / 2 - 14} 28" fill="none" stroke="${GOLD}" stroke-width="3" opacity=".9"/>
+    <text x="0" y="10" text-anchor="middle" font-size="54" font-weight="700" fill="#fff">${text}</text>
+  </g></g>`;
+}
+
+/* ---------- Telefone mágico ---------- */
+function phone(id, x, y, w, h, screen) {
+  const cid = nid('clip');
+  return `<g transform="translate(${x} ${y})"><g id="${id}" class="tb" style="transform-origin:center">
+    <rect x="${-w / 2 - 6}" y="${-h / 2 - 6}" width="${w + 12}" height="${h + 12}" rx="${w * 0.13}" fill="url(#gGold)" filter="url(#soft)"/>
+    <rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="${w * 0.12}" fill="#3a1d5c"/>
+    <clipPath id="${cid}"><rect x="${-w / 2 + 20}" y="${-h / 2 + 20}" width="${w - 40}" height="${h - 40}" rx="${w * 0.08}"/></clipPath>
+    <g clip-path="url(#${cid})">${screen}</g>
+    <rect x="-56" y="${-h / 2 + 30}" width="112" height="24" rx="12" fill="#3a1d5c"/>
+  </g></g>`;
+}
+
+const roomBg = (c1, c2) => `<rect width="1080" height="1920" fill="${c1}"/><circle cx="540" cy="900" r="900" fill="url(#gBokehCenter)" opacity=".7"/>
+  ${Array.from({ length: 16 }, (_, i) => `<circle cx="${(i * 173) % 1080}" cy="${(i * 263) % 1700 + 80}" r="${20 + (i % 5) * 14}" fill="${c2}" opacity="${0.12 + (i % 3) * 0.06}" filter="url(#blur8)"/>`).join('')}`;
+
+/* =====================================================================
+   CENAS
+   ===================================================================== */
+const scenes = [];
+
+// 1. Era uma vez
+scenes.push(['era', `
+  <g id="cam1" class="tb" style="transform-origin:50% 60%">
+    ${skyDusk('e')}
+    ${moon(880, 640, 80)}
+    ${castle('cast1', 540, 1260, 1)}
+    <path d="M0 1240 Q270 1150 540 1230 T1080 1200 V1920 H0Z" fill="url(#gHill)"/>
+    <path d="M0 1400 Q320 1320 620 1400 T1080 1380 V1920 H0Z" fill="url(#gHill2)"/>
+    ${Array.from({ length: 14 }, (_, i) => spark((i * 97) % 1000 + 40, 1280 + (i * 53) % 500, 6, '#fff3a0', `ff${i}`)).join('')}
+  </g>
+  <text id="eraT" x="540" y="370" text-anchor="middle" font-family="Great Vibes, cursive" font-size="150" fill="#fff4cc" filter="url(#glow)">Era uma vez...</text>
+  <g id="burst1">${Array.from({ length: 12 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return spark(540 + Math.cos(a) * 220, 1350 + Math.sin(a) * 220, 18, i % 2 ? '#fff' : '#ffe48a', `b1s${i}`); }).join('')}</g>
+  <g transform="translate(540 1720) scale(.82)">${princess('hel1')}</g>
+  ${ribbon('cap-era', 'a princesinha Helena', 1500)}
+`]);
+
+// 2. Sonho do baile
+scenes.push(['sonho', `
+  ${roomBg('#cdd3ff', '#ffffff')}
+  <g transform="translate(300 1740) scale(.82)">${princess('hel2', { wand: false })}</g>
+  <g id="dots2">${[[420, 1180, 18], [470, 1100, 26], [540, 1000, 36]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" filter="url(#soft)"/>`).join('')}</g>
+  <g transform="translate(650 700)"><g id="nuvem2" class="tb" style="transform-origin:20% 90%">
+    <path d="M-330 60 Q-370 -60 -250 -110 Q-240 -250 -90 -240 Q-20 -340 120 -280 Q260 -310 300 -170 Q400 -120 360 10 Q380 150 240 170 Q160 260 20 220 Q-120 270 -200 190 Q-360 190 -330 60Z" fill="#fffaff" filter="url(#soft)"/>
+    <g id="m2-bolo" class="tb" style="transform-origin:50% 100%"><g transform="translate(0 110)">
+      <rect x="-90" y="-80" width="180" height="80" rx="16" fill="#ff8fc0"/><rect x="-60" y="-150" width="120" height="70" rx="14" fill="#ffd1e6"/>
+      <path d="M-90 -66 q22 20 45 0 q22 20 45 0 q22 20 45 0 q22 20 45 0" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+      <rect x="-6" y="-196" width="12" height="46" rx="4" fill="#9ad8ff"/><ellipse cx="0" cy="-206" rx="8" ry="14" fill="#ffb347" filter="url(#glow)"/>
+    </g></g>
+    ${[['urso', -220, -40], ['coelha', 220, -60], ['dino', 0, -170]].map(([k, x, y], i) => `<g transform="translate(${x} ${y}) scale(.6)"><g id="m2-a${i}" class="tb" style="transform-origin:center">${animalHead(k, 'm2' + k)}</g></g>`).join('')}
+    ${spark(-280, -150, 16, '#ffd25c', 'm2s1')}${spark(300, 100, 14, '#ff9ec9', 'm2s2')}${spark(120, -230, 12, '#9ad8ff', 'm2s3')}
+  </g></g>
+  ${Array.from({ length: 8 }, (_, i) => `<g id="h2${i}" class="tb"><path transform="translate(${120 + i * 120} 1900) scale(${0.7 + (i % 3) * 0.3})" d="M0 0 C -24 -28 -56 -4 -28 24 L0 50 L28 24 C 56 -4 24 -28 0 0Z" fill="${['#ff6fae', '#ff9ec9', '#e84a8a'][i % 3]}" opacity=".9"/></g>`).join('')}
+  ${ribbon('cap-sonho', 'Ela sonhava com um baile de princesa', 1520)}
+`]);
+
+// 3. Problema: como chamar todo mundo a tempo?
+scenes.push(['problema', `
+  ${roomBg('#3a2a7a', '#9a8cff')}
+  ${moon(860, 420, 60)}
+  <g transform="translate(300 760)"><g id="relogio" class="tb" style="transform-origin:center">
+    <circle r="190" fill="url(#gGold)" filter="url(#soft)"/><circle r="160" fill="#fff8ec"/>
+    ${Array.from({ length: 12 }, (_, i) => `<rect x="-5" y="-150" width="10" height="${i % 3 ? 16 : 28}" rx="5" fill="#5b2f8a" transform="rotate(${i * 30})"/>`).join('')}
+    <g id="pont1" class="tb" style="transform-origin:50% 100%"><rect x="-7" y="-110" width="14" height="110" rx="7" fill="#5b2f8a"/></g>
+    <g id="pont2" class="tb" style="transform-origin:50% 100%"><rect x="-5" y="-140" width="10" height="140" rx="5" fill="#ff4f9a"/></g>
+    <circle r="14" fill="${GOLD}"/>
+  </g></g>
+  ${Array.from({ length: 7 }, (_, i) => `<g id="perg${i}" class="tb" style="transform-origin:center"><g transform="translate(${700 + (i % 3) * 90} ${1180 - i * 60}) rotate(${(i * 23) % 40 - 20})">
+    <rect x="-90" y="-30" width="180" height="60" rx="14" fill="#fff1d0"/><circle cx="-90" cy="0" r="30" fill="#f2d9a6"/><circle cx="90" cy="0" r="30" fill="#f2d9a6"/>
+    <rect x="-40" y="-8" width="80" height="6" rx="3" fill="#c9a26a"/><circle cx="0" cy="22" r="10" fill="#d6336c"/>
+  </g></g>`).join('')}
+  ${['?', '?', '?'].map((q, i) => `<text id="q${i}" x="${560 + i * 120}" y="${500 - i * 40}" font-size="${120 - i * 20}" font-weight="700" fill="#ffe48a" filter="url(#glow)">${q}</text>`).join('')}
+  <g transform="translate(330 1760) scale(.82)">${princess('hel3', { wand: false })}</g>
+  ${ribbon('cap-problema', 'Mas como chamar todo mundo a tempo?', 330)}
+`]);
+
+// 4. Magia da varinha
+scenes.push(['magia', `
+  <rect width="1080" height="1920" fill="#2a1460"/>
+  <circle cx="700" cy="760" r="900" fill="url(#gMagic)"/>
+  ${Array.from({ length: 24 }, (_, i) => spark((i * 199) % 1060 + 10, (i * 157) % 1800 + 60, 5 + (i % 4) * 3, i % 3 ? '#fff' : '#ffd6f0', `m4s${i}`, true)).join('')}
+  <path id="trilha" d="M441 1317 C 470 1060, 580 860, 700 760" fill="none" stroke="url(#gTrail)" stroke-width="22" stroke-linecap="round" filter="url(#glow)" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+  <g id="trilhaS">${Array.from({ length: 8 }, (_, i) => { const t = (i + 1) / 9, u = 1 - t; const x = u ** 3 * 441 + 3 * u * u * t * 470 + 3 * u * t * t * 580 + t ** 3 * 700; const y = u ** 3 * 1317 + 3 * u * u * t * 1060 + 3 * u * t * t * 860 + t ** 3 * 760; return spark(x, y, 10 + (i % 3) * 4, i % 2 ? '#fff' : '#ffe48a', `tr${i}`); }).join('')}</g>
+  <circle id="aura" cx="700" cy="760" r="120" fill="none" stroke="#fff3b0" stroke-width="18" filter="url(#glow)" opacity="0" class="tb" style="transform-origin:center"/>
+  ${phone('fone4', 700, 760, 420, 760, `
+    <rect x="-200" y="-370" width="400" height="740" fill="url(#gScreenPink)"/>
+    ${castle('mini4', 0, 40, 0.42)}
+    <text x="0" y="150" text-anchor="middle" font-size="78" font-weight="700" stroke="#fff" stroke-width="10" paint-order="stroke">${['F', 'e', 's', 't', 'a'].map((ch, i) => `<tspan fill="${['#d61f63', '#e86a1c', '#c99000', '#2a9d58', '#1f7fd1'][i]}">${ch}</tspan>`).join('')}</text>
+    <text x="0" y="230" text-anchor="middle" font-size="62" font-weight="700" fill="#6a2fd6" stroke="#fff" stroke-width="10" paint-order="stroke">no Link</text>
+    <text x="0" y="292" text-anchor="middle" font-size="30" font-weight="600" fill="#8a3a6a">convites encantados</text>
+  `)}
+  <g transform="translate(300 1760) scale(.82)">${princess('hel4')}</g>
+  ${ribbon('cap-magia', 'Com um toque de varinha...', 330)}
+`]);
+
+// 5. Editor do convite
+const field = (id, y, label, value) => `
+  <text x="-170" y="${y - 18}" font-size="28" font-weight="600" fill="#8a3a6a">${label}</text>
+  <rect x="-180" y="${y}" width="360" height="74" rx="20" fill="#fff" stroke="#f3c6dd" stroke-width="4"/>
+  <clipPath id="clip-${id}"><rect id="${id}-mask" x="-160" y="${y}" width="0" height="74"/></clipPath>
+  <text clip-path="url(#clip-${id})" x="-158" y="${y + 50}" font-size="40" font-weight="700" fill="${INK}">${value}</text>`;
+const themeIcon = {
+  coroa: `<path d="M-46 20 L-36 -26 L-16 -2 L0 -36 L16 -2 L36 -26 L46 20Z" fill="url(#gGold)"/><circle cx="0" cy="-8" r="8" fill="#ff4f9a"/>`,
+  castelo: `<rect x="-44" y="-20" width="88" height="56" fill="#c9a8ff"/><path d="M-50 -18 L-30 -58 L-10 -18Z M10 -18 L30 -58 L50 -18Z" fill="#6a2fd6"/><rect x="-40" y="-34" width="20" height="16" fill="#c9a8ff"/><rect x="20" y="-34" width="20" height="16" fill="#c9a8ff"/><path d="M-12 36 V14 A12 12 0 0 1 12 14 V36Z" fill="#6a2fd6"/>`,
+  estrela: `<path d="M0 -40 L11 -12 L42 -12 L17 6 L26 36 L0 18 L-26 36 L-17 6 L-42 -12 L-11 -12Z" fill="#ffd25c"/>`,
+};
+scenes.push(['editor', `
+  ${roomBg('#ffd9ec', '#ffffff')}
+  ${phone('fone5', 540, 860, 540, 1000, `
+    <rect x="-260" y="-480" width="520" height="960" fill="#fff6fb"/>
+    <g id="passoA">
+      <text x="0" y="-340" text-anchor="middle" font-size="44" font-weight="700" fill="${INK}">Escolha o tema</text>
+      ${[['coroa', -160, '#fff1c2'], ['castelo', 0, '#efe4ff'], ['estrela', 160, '#ffe1ef']].map(([k, x, bg], i) => `
+        <g transform="translate(${x} -190)"><g id="tema${i}" class="tb" style="transform-origin:center">
+          <rect x="-70" y="-80" width="140" height="160" rx="26" fill="${bg}" stroke="#f3c6dd" stroke-width="4"/>
+          <g transform="scale(1.1)">${themeIcon[k]}</g>
+        </g></g>`).join('')}
+      <g id="check5" class="tb" style="transform-origin:center"><g transform="translate(50 -268)"><circle r="30" fill="#2dbe6c"/><path d="M-12 0 L-3 10 L14 -10" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+      ${field('f1', 10, 'Nome', 'Helena')}
+      ${field('f2', 150, 'Data', '20 de maio, 15h')}
+      ${field('f3', 290, 'Local', 'Salão Encantado')}
+    </g>
+    <g id="passoC" opacity="0">
+      <rect x="-260" y="-480" width="520" height="520" fill="url(#gSky)"/>
+      ${moon(160, -380, 34)}
+      ${castle('mini5', 0, 30, 0.4)}
+      <g transform="translate(-120 40) scale(.36)">${princess('hel5b')}</g>
+      <rect x="-220" y="60" width="440" height="380" rx="36" fill="#fff" filter="url(#soft)"/>
+      <text x="0" y="150" text-anchor="middle" font-size="36" font-weight="700" fill="#b0306c">BAILE DA PRINCESA</text>
+      <text x="0" y="250" text-anchor="middle" font-family="Great Vibes, cursive" font-size="104" fill="#d61f63">Helena</text>
+      <text x="0" y="320" text-anchor="middle" font-size="40" font-weight="700" fill="${INK}">6 anos · 20 de maio</text>
+      ${spark(-170, 110, 14, '#ffd25c', 'c5s1')}${spark(180, 200, 12, '#ff9ec9', 'c5s2')}${spark(150, 400, 10, '#9ad8ff', 'c5s3')}
+      <g id="link5" class="tb" style="transform-origin:center"><g transform="translate(0 392)"><rect x="-160" y="-34" width="320" height="68" rx="34" fill="#6a2fd6"/><text x="0" y="13" text-anchor="middle" font-size="34" font-weight="700" fill="#fff">link exclusivo</text></g></g>
+    </g>
+  `)}
+  ${spark(880, 340, 30, '#ffd25c', 'e5a')}${spark(170, 420, 24, '#ff6fae', 'e5b')}${spark(930, 1240, 22, '#9a8cff', 'e5c')}${spark(140, 1180, 26, '#fff', 'e5d')}
+  ${ribbon('cap-editor', 'Tema, data e lugar. Cheio de brilho!', 1530)}
+`]);
+
+// 6. O reino confirma
+const bird = (id) => `<g id="${id}" class="tb"><g filter="url(#soft)">
+  <ellipse cx="0" cy="0" rx="34" ry="22" fill="#fff"/><circle cx="30" cy="-12" r="16" fill="#fff"/><path d="M44 -12 l14 4 l-14 4z" fill="#ffb347"/>
+  <circle cx="34" cy="-15" r="3" fill="${INK}"/>
+  <g class="asa tb" style="transform-origin:50% 100%"><path d="M-6 -6 Q-30 -60 10 -50 Q14 -26 6 -4Z" fill="#f4f0ff"/></g>
+  <g transform="translate(-6 30)"><path d="M0 0 C -12 -14 -28 -2 -14 12 L0 24 L14 12 C 28 -2 12 -14 0 0Z" fill="#ff4f9a"/></g>
+</g></g>`;
+scenes.push(['reino', `
+  <rect width="1080" height="1920" fill="url(#gDay)"/>
+  ${Array.from({ length: 5 }, (_, i) => `<g id="nv6${i}" class="tb"><g transform="translate(${(i * 260) % 1000 + 60} ${200 + i * 90}) scale(${0.8 + (i % 2) * 0.4})"><path d="M-120 30 Q-130 -20 -80 -25 Q-70 -75 -10 -65 Q30 -100 75 -60 Q130 -65 125 -10 Q160 10 125 40 Z" fill="#fff" opacity=".9" filter="url(#soft)"/></g></g>`).join('')}
+  ${castle('cast6', 540, 1150, 0.55)}
+  <path d="M0 1140 Q270 1060 540 1130 T1080 1100 V1920 H0Z" fill="#8fd17f"/>
+  <path d="M0 1290 Q300 1220 600 1290 T1080 1270 V1920 H0Z" fill="#62b25f"/>
+  ${[[150, 1260, '#ff9ec9'], [880, 1240, '#9ad8ff'], [330, 1380, '#ffd25c'], [760, 1400, '#c9a8ff']].map(([x, y, c]) => `<g transform="translate(${x} ${y})"><rect x="-50" y="-60" width="100" height="70" fill="#fff6e8"/><path d="M-62 -58 L0 -110 L62 -58Z" fill="${c}"/><rect x="-14" y="-30" width="28" height="40" rx="6" fill="#8a5a3c"/></g>`).join('')}
+  ${[0, 1, 2].map((i) => `<g transform="translate(0 ${520 + i * 170})">${bird('ave' + i)}</g>`).join('')}
+  ${[['urso', 230], ['coelha', 430], ['dino', 650], ['baleia', 850]].map(([k, x], i) => `
+    <g transform="translate(${x} ${900 + (i % 2) * 70})"><g id="cf${i}" class="tb" style="transform-origin:50% 100%">
+      <circle r="92" fill="#fff" filter="url(#soft)"/><g transform="scale(.82)">${animalHead(k, 'r6' + k)}</g>
+      <g transform="translate(0 130)"><rect x="-92" y="-32" width="184" height="64" rx="32" fill="#2dbe6c"/><text x="0" y="13" text-anchor="middle" font-size="34" font-weight="700" fill="#fff">Eu vou!</text></g>
+    </g></g>`).join('')}
+  <g transform="translate(540 1700)"><g id="cont6" class="tb" style="transform-origin:center">
+    <rect x="-250" y="-70" width="500" height="140" rx="70" fill="url(#gGold)" filter="url(#soft)"/>
+    ${[1, 2, 3, 4].map((n) => `<g id="c6n${n}" opacity="0"><text x="-150" y="32" text-anchor="middle" font-size="96" font-weight="700" fill="${INK}">${n}</text><text x="40" y="18" text-anchor="middle" font-size="48" font-weight="700" fill="${INK}">${n === 1 ? 'confirmado' : 'confirmados'}</text></g>`).join('')}
+  </g></g>
+  ${ribbon('cap-reino', 'E o reino inteiro confirmou!', 1520)}
+`]);
+
+// 7. O baile mágico
+scenes.push(['baile', `
+  <rect width="1080" height="1920" fill="url(#gHall)"/>
+  ${[160, 540, 920].map((x, i) => `<g transform="translate(${x} 0)">
+    <path d="M-150 1120 V560 A150 150 0 0 1 150 560 V1120Z" fill="#1d1250"/>
+    ${Array.from({ length: 3 }, (_, k) => `<g id="fw${i}${k}" class="tb" style="transform-origin:center"><g transform="translate(${(k - 1) * 70} ${560 + k * 90})">${Array.from({ length: 10 }, (_, j) => `<line x1="0" y1="0" x2="${(Math.cos(j / 10 * Math.PI * 2) * 70).toFixed(1)}" y2="${(Math.sin(j / 10 * Math.PI * 2) * 70).toFixed(1)}" stroke="${['#ffd25c', '#ff6fae', '#9ad8ff'][(i + k) % 3]}" stroke-width="7" stroke-linecap="round"/>`).join('')}</g></g>`).join('')}
+    <path d="M-150 1120 V560 A150 150 0 0 1 150 560 V1120" fill="none" stroke="${GOLD}" stroke-width="12"/>
+  </g>`).join('')}
+  <path d="M0 0 Q140 500 60 1500 L0 1500Z" fill="url(#gCurtain)"/><path d="M1080 0 Q940 500 1020 1500 L1080 1500Z" fill="url(#gCurtain)"/>
+  <circle cx="70" cy="760" r="20" fill="${GOLD}"/><circle cx="1010" cy="760" r="20" fill="${GOLD}"/>
+  <path d="M0 1180 L1080 1180 L1080 1920 L0 1920Z" fill="#ffd9ec"/>
+  ${Array.from({ length: 9 }, (_, i) => `<path d="M${i * 135 - 60} 1920 L${540 + (i - 4) * 60} 1180" stroke="#f3b6d4" stroke-width="5"/>`).join('')}
+  ${[1260, 1380, 1540, 1740].map((y) => `<path d="M0 ${y} L1080 ${y}" stroke="#f3b6d4" stroke-width="5"/>`).join('')}
+  <g id="lustre" class="tb" style="transform-origin:50% 0%"><g transform="translate(540 0)">
+    <line x1="0" y1="0" x2="0" y2="180" stroke="${GOLD}" stroke-width="6"/>
+    <path d="M-200 240 Q0 330 200 240" fill="none" stroke="${GOLD}" stroke-width="12"/>
+    <path d="M-120 200 Q0 260 120 200" fill="none" stroke="${GOLD}" stroke-width="10"/>
+    ${[-200, -120, -40, 40, 120, 200].map((x) => `<rect x="${x - 7}" y="${x % 80 === 0 ? 172 : 212}" width="14" height="40" rx="4" fill="#fff8e1"/><ellipse class="velaC" cx="${x}" cy="${x % 80 === 0 ? 160 : 200}" rx="10" ry="18" fill="#ffd25c" filter="url(#glow)"/>`).join('')}
+    ${spark(0, 300, 26, '#9ad8ff', 'lus1')}
+  </g></g>
+  <g transform="translate(860 1420)">
+    <rect x="-110" y="-120" width="220" height="120" rx="18" fill="#ff8fc0"/><rect x="-80" y="-220" width="160" height="104" rx="16" fill="#ffd1e6"/><rect x="-54" y="-300" width="108" height="84" rx="14" fill="#fff"/>
+    <path d="M-110 -100 q27 24 55 0 q27 24 55 0 q27 24 55 0 q27 24 55 0" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-6" y="-346" width="12" height="46" rx="4" fill="#9ad8ff"/><ellipse class="velaC" cx="0" cy="-358" rx="9" ry="16" fill="#ffb347" filter="url(#glow)"/>
+  </g>
+  <g transform="translate(200 1740) scale(.72)">${friend('urso', 'f7u')}</g>
+  <g transform="translate(410 1800) scale(.72)">${friend('coelha', 'f7c')}</g>
+  <g transform="translate(680 1820) scale(.72)">${friend('dino', 'f7d')}</g>
+  <g transform="translate(470 1680) scale(.72)">${princess('hel7')}</g>
+  <g id="conf7">${Array.from({ length: 40 }, (_, i) => `<g class="conf7 tb" style="transform-origin:center">${spark((i * 97) % 1080, -40 - (i * 53) % 500, 9 + (i % 3) * 4, ['#ffd25c', '#ff9ec9', '#9ad8ff', '#fff', '#c9a8ff'][i % 5], '', i % 4 === 0)}</g>`).join('')}</g>
+  ${ribbon('cap-baile', 'E o baile foi mágico!', 1080)}
+`]);
+
+// 8. Final
+const LOGO = 'Festa no Link';
+const LCOL = ['#d61f63', '#e86a1c', '#c99000', '#2a9d58', '#1f7fd1', null, '#6a2fd6', '#d61f63', null, '#2a9d58', '#1f7fd1', '#e86a1c', '#6a2fd6'];
+let lx = -400;
+const letters = LOGO.split('').map((ch, i) => {
+  if (ch === ' ') { lx += 34; return ''; }
+  const x = lx; lx += ch === 'i' ? 40 : ch === 'L' ? 62 : 68;
+  return `<g id="let${i}" class="tb" style="transform-origin:50% 100%"><text x="${x}" y="0" font-size="124" font-weight="700" fill="${LCOL[i]}" stroke="#fff" stroke-width="16" paint-order="stroke" filter="url(#soft)">${ch}</text></g>`;
+}).join('');
+scenes.push(['final', `
+  ${skyDusk('f')}
+  ${moon(860, 300, 70)}
+  ${castle('cast8', 540, 1340, 0.7)}
+  <path d="M0 1320 Q270 1240 540 1310 T1080 1290 V1920 H0Z" fill="url(#gHill)"/>
+  <g transform="translate(540 520)">${letters}</g>
+  <g transform="translate(540 640)"><g id="slogan8" class="tb" style="transform-origin:center">
+    <rect x="-310" y="-48" width="620" height="96" rx="48" fill="url(#gRibbon)" filter="url(#soft)"/>
+    <text x="0" y="16" text-anchor="middle" font-size="52" font-weight="700" fill="#fff">Convites encantados</text>
+  </g></g>
+  <g transform="translate(540 870)"><g id="preco8" class="tb" style="transform-origin:center">
+    <rect x="-250" y="-120" width="500" height="240" rx="40" fill="url(#gGold)" filter="url(#soft)"/>
+    <rect x="-232" y="-102" width="464" height="204" rx="30" fill="#fff8ec"/>
+    <text x="0" y="-26" text-anchor="middle" font-size="44" font-weight="600" fill="#8a3a6a">a partir de</text>
+    <text x="0" y="70" text-anchor="middle" font-size="108" font-weight="700" fill="#d61f63">R$ 29,90</text>
+  </g></g>
+  <g transform="translate(540 1110)"><g id="cta8" class="tb" style="transform-origin:center">
+    <rect x="-250" y="-66" width="500" height="132" rx="66" fill="#d61f63" filter="url(#soft)"/>
+    <text x="0" y="22" text-anchor="middle" font-size="64" font-weight="700" fill="#fff">Faça o seu!</text>
+  </g></g>
+  <g transform="translate(250 1760) scale(.8)">${princess('hel8')}</g>
+  <g transform="translate(830 1720) scale(.7)">${friend('coelha', 'f8c')}</g>
+  ${Array.from({ length: 16 }, (_, i) => spark((i * 131) % 1040 + 20, 300 + (i * 97) % 1000, 8 + (i % 3) * 5, i % 2 ? '#fff' : '#ffe48a', `f8s${i}`)).join('')}
+`]);
+
+/* ---------- Montagem ---------- */
+palco.innerHTML = `
+<defs>
+  <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d1456"/><stop offset=".4" stop-color="#5b33a8"/><stop offset=".7" stop-color="#d873b8"/><stop offset="1" stop-color="#ffc2a8"/></linearGradient>
+  <linearGradient id="gDay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7ec8f5"/><stop offset=".6" stop-color="#cdeeff"/><stop offset="1" stop-color="#fff2d8"/></linearGradient>
+  <linearGradient id="gHall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4b2a8f"/><stop offset="1" stop-color="#b65fbf"/></linearGradient>
+  <linearGradient id="gCurtain" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b0306c"/><stop offset=".5" stop-color="#e2558f"/><stop offset="1" stop-color="#a02160"/></linearGradient>
+  <radialGradient id="gMoonGlow"><stop offset="0" stop-color="#fff6d8" stop-opacity=".55"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></radialGradient>
+  <radialGradient id="gMagic"><stop offset="0" stop-color="#ff9ee0" stop-opacity=".85"/><stop offset=".35" stop-color="#9a5cff" stop-opacity=".6"/><stop offset="1" stop-color="#2a1460" stop-opacity="0"/></radialGradient>
+  <radialGradient id="gBokehCenter"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gCastle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f7d9ff"/><stop offset=".6" stop-color="#e3b8f5"/><stop offset="1" stop-color="#c79be6"/></linearGradient>
+  <linearGradient id="gRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a5cff"/><stop offset="1" stop-color="#4b2bb0"/></linearGradient>
+  <linearGradient id="gHill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b4bb8"/><stop offset="1" stop-color="#2c2470"/></linearGradient>
+  <linearGradient id="gHill2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3a9e"/><stop offset="1" stop-color="#1f1a58"/></linearGradient>
+  <linearGradient id="gDress" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f774b4"/><stop offset=".55" stop-color="#e2559e"/><stop offset="1" stop-color="#b8479f"/></linearGradient>
+  <linearGradient id="gDressLight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd1e8"/><stop offset="1" stop-color="#e7b8ff"/></linearGradient>
+  <linearGradient id="gBodice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2559e"/><stop offset="1" stop-color="#c23d87"/></linearGradient>
+  <radialGradient id="gSleeve" cx="40%" cy="35%"><stop offset="0" stop-color="#ffe1f0"/><stop offset="1" stop-color="#f59ac8"/></radialGradient>
+  <radialGradient id="gSkin" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#f6c9a6"/><stop offset="1" stop-color="#dba07c"/></radialGradient>
+  <radialGradient id="gHair" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#7a4430"/><stop offset="1" stop-color="#3a1c12"/></radialGradient>
+  <linearGradient id="gGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#f5c84c"/><stop offset="1" stop-color="#c99517"/></linearGradient>
+  <linearGradient id="gRibbon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0498f"/><stop offset="1" stop-color="#c41f6a"/></linearGradient>
+  <linearGradient id="gTrail" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#fff3b0"/><stop offset=".5" stop-color="#ff9ee0"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+  <linearGradient id="gScreenPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe1f0"/><stop offset="1" stop-color="#efe4ff"/></linearGradient>
+  <radialGradient id="gBear" cx="40%" cy="35%"><stop offset="0" stop-color="#e0a066"/><stop offset="1" stop-color="#b8743e"/></radialGradient>
+  <radialGradient id="gBunny" cx="40%" cy="35%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1e6ef"/></radialGradient>
+  <radialGradient id="gDino" cx="40%" cy="35%"><stop offset="0" stop-color="#86e08f"/><stop offset="1" stop-color="#43b058"/></radialGradient>
+  <radialGradient id="gWhale" cx="40%" cy="35%"><stop offset="0" stop-color="#8fd2ff"/><stop offset="1" stop-color="#3a9fe6"/></radialGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="soft" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#2a0f3f" flood-opacity=".28"/></filter>
+  <filter id="blur8"><feGaussianBlur stdDeviation="8"/></filter>
+  <radialGradient id="vinheta" cx="50%" cy="45%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1a0a2a" stop-opacity=".35"/></radialGradient>
+  <clipPath id="quadro"><rect width="1080" height="1920"/></clipPath>
+</defs>
+${scenes.map(([id, svg]) => `<g id="sc-${id}" style="opacity:0"><g clip-path="url(#quadro)">${svg}</g></g>`).join('')}
+<rect width="1080" height="1920" fill="url(#vinheta)"/>
+<g id="flash" opacity="0"><rect width="1080" height="1920" fill="#fff"/></g>
+`;
+
+/* =====================================================================
+   ANIMAÇÕES
+   ===================================================================== */
+const anims = [];
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+function A(target, keyframes, start, dur, opts = {}) {
+  const els = typeof target === 'string' ? $$(target) : [target];
+  for (const el of els) {
+    if (!el) continue;
+    const a = el.animate(keyframes, { duration: Math.max(1, dur * 1000), delay: start * 1000, fill: opts.fill || 'both', easing: opts.easing || 'ease-in-out', iterations: opts.iterations || 1 });
+    a.pause();
+    anims.push(a);
+  }
+}
+const BACK = 'cubic-bezier(.34,1.56,.64,1)';
+const loop = (sel, kf, start, period, end, easing = 'ease-in-out') => A(sel, kf, start, period, { iterations: Math.max(1, Math.ceil((end - start) / period)), fill: 'forwards', easing });
+
+// Transição entre cenas: dissolve com um "brilho" branco (estilo filme de conto de fadas).
+TL.scenes.forEach((s, i) => {
+  const last = i === TL.scenes.length - 1;
+  const fadeIn = i === 0 ? 0.6 : 0.5;
+  const total = s.end - s.start + (last ? 0 : 0.5);
+  A(`#sc-${s.id}`, [
+    { offset: 0, opacity: 0 },
+    { offset: fadeIn / total, opacity: 1 },
+    { offset: last ? 1 : (total - 0.5) / total, opacity: 1 },
+    { offset: 1, opacity: last ? 1 : 0 },
+  ], s.start, total, { easing: 'linear' });
+  if (i > 0) A('#flash', [{ opacity: 0 }, { opacity: 0.55 }, { opacity: 0 }], s.start - 0.05, 0.6, { fill: 'forwards' });
+});
+TL.scenes.forEach((s) => {
+  const el = $(`#cap-${s.id}`);
+  if (el) A(el, [{ transform: 'scale(0) rotate(-6deg)', opacity: 0 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }], s.vo + 0.2, 0.5, { easing: BACK });
+});
+
+// Ambientes contínuos
+$$('[id*="-ceu"]').forEach((el, i) => A(el, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.3)', opacity: .3 }, { transform: 'scale(1)', opacity: 1 }], (i % 7) * 0.3, 1.6 + (i % 4) * 0.4, { iterations: 40, fill: 'forwards' }));
+$$('[id$="-eyes"]').forEach((el, i) => A(el, [{ transform: 'scaleY(1)' }, { offset: .92, transform: 'scaleY(1)' }, { offset: .96, transform: 'scaleY(.08)' }, { transform: 'scaleY(1)' }], (i % 5) * 0.37, 3.4, { iterations: 30, easing: 'linear' }));
+$$('[id*="-f"]').forEach((el, i) => { if (/-f\d$/.test(el.id)) A(el, [{ transform: 'skewY(0deg) scaleX(1)' }, { transform: 'skewY(10deg) scaleX(.85)' }, { transform: 'skewY(0deg) scaleX(1)' }], (i % 3) * 0.2, 0.9, { iterations: 80 }); });
+$$('[id$="-skirt"]').forEach((el, i) => A(el, [{ transform: 'rotate(-2deg)' }, { transform: 'rotate(2deg)' }, { transform: 'rotate(-2deg)' }], i * 0.3, 2.2, { iterations: 30 }));
+$$('[id$="-hairB"]').forEach((el, i) => A(el, [{ transform: 'scaleY(1)' }, { transform: 'scaleY(1.03)' }, { transform: 'scaleY(1)' }], i * 0.2, 1.8, { iterations: 40 }));
+$$('[id$="-glint"], [id*="-brilho"]').forEach((el, i) => A(el, [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.2)', opacity: 1 }, { transform: 'scale(.2)', opacity: 0 }], (i % 6) * 0.25, 1.4, { iterations: 50 }));
+$$('.velaC').forEach((el, i) => A(el, [{ transform: 'scale(1,1)' }, { transform: 'scale(.85,1.15)' }, { transform: 'scale(1,1)' }], i * 0.05, 0.4, { iterations: 200 }));
+$$('.asa').forEach((el) => A(el, [{ transform: 'scaleY(1)' }, { transform: 'scaleY(-.6)' }, { transform: 'scaleY(1)' }], 0, 0.32, { iterations: 300 }));
+
+const wave = (sel, start, end, speed = 0.5) => loop(sel, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-150deg)' }, { transform: 'rotate(-120deg)' }, { transform: 'rotate(-150deg)' }, { transform: 'rotate(0deg)' }], start, speed * 4, end);
+const bounce = (sel, start, end, h = 30, period = 0.6) => loop(sel, [{ transform: 'translateY(0)' }, { transform: `translateY(-${h}px)`, easing: 'ease-in' }, { transform: 'translateY(0)' }], start, period, end);
+const twinkleAll = (prefix, start, end) => $$(`[id^="${prefix}"]`).forEach((el, i) => loop(el, [{ transform: 'scale(.4) rotate(0deg)', opacity: .5 }, { transform: 'scale(1.2) rotate(30deg)', opacity: 1 }, { transform: 'scale(.4) rotate(0deg)', opacity: .5 }], start + (i % 6) * 0.17, 1.2, end));
+
+// --- 1. Era uma vez
+{
+  const s = SC.era, d = s.dur;
+  const hel = s.vo + d * 0.36;
+  A('#cam1', [{ transform: 'scale(1)' }, { transform: 'scale(1.07)' }], s.start, s.end - s.start, { easing: 'linear' });
+  A('#eraT', [{ opacity: 0, transform: 'translateY(30px)' }, { opacity: 1, transform: 'translateY(0)' }], s.vo - 0.2, 1.0, { easing: 'ease-out' });
+  twinkleAll('ff', s.start, s.end + 1);
+  $$('[id^="b1s"]').forEach((el, i) => A(el, [{ transform: 'scale(0)', opacity: 0 }, { offset: .4, transform: 'scale(1.4)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], hel - 0.15 + i * 0.02, 1.0));
+  A('#hel1', [{ transform: 'scale(0) rotate(-12deg)', opacity: 0 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }], hel, 0.7, { easing: BACK });
+  wave('#hel1-armR', hel + 0.8, s.end + 1);
+}
+// --- 2. Sonho
+{
+  const s = SC.sonho, d = s.dur;
+  ['#dots2 circle:nth-child(1)', '#dots2 circle:nth-child(2)', '#dots2 circle:nth-child(3)'].forEach((sel, i) => A(sel, [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], s.vo + i * 0.15, 0.3, { easing: BACK }));
+  $$('#dots2 circle').forEach((c) => (c.style.transformBox = 'fill-box', c.style.transformOrigin = 'center'));
+  A('#nuvem2', [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], s.vo + 0.45, 0.6, { easing: BACK });
+  A('#m2-bolo', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], s.vo + d * 0.3, 0.45, { easing: BACK });
+  [0, 1, 2].forEach((i) => A(`#m2-a${i}`, [{ transform: 'scale(0) rotate(-20deg)' }, { transform: 'scale(1) rotate(0deg)' }], s.vo + d * (0.45 + i * 0.12), 0.45, { easing: BACK }));
+  twinkleAll('m2s', s.start, s.end + 1);
+  for (let i = 0; i < 8; i++) loop(`#h2${i}`, [{ transform: 'translateY(0)', opacity: 0 }, { offset: .2, opacity: 1 }, { transform: 'translateY(-1100px)', opacity: 0 }], s.start + i * 0.35, 3.4, s.end + 1, 'linear');
+  loop('#hel2', [{ transform: 'rotate(-2deg)' }, { transform: 'rotate(2deg)' }, { transform: 'rotate(-2deg)' }], s.start, 2.4, s.end + 1);
+}
+// --- 3. Problema
+{
+  const s = SC.problema;
+  loop('#pont1', [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], s.start, 1.6, s.end + 1, 'linear');
+  loop('#pont2', [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], s.start, 0.4, s.end + 1, 'linear');
+  loop('#relogio', [{ transform: 'rotate(-4deg)' }, { transform: 'rotate(4deg)' }, { transform: 'rotate(-4deg)' }], s.start, 0.3, s.end + 1);
+  for (let i = 0; i < 7; i++) A(`#perg${i}`, [{ transform: 'translateY(-900px) rotate(-40deg)', opacity: 0 }, { offset: .8, transform: 'translateY(12px)', opacity: 1 }, { transform: 'translateY(0)' }], s.start + 0.3 + i * 0.22, 0.6, { easing: 'ease-in' });
+  [0, 1, 2].forEach((i) => A(`#q${i}`, [{ opacity: 0, transform: 'translateY(20px)' }, { opacity: 1, transform: 'translateY(0)' }], s.vo + 0.3 + i * 0.25, 0.4, { easing: BACK }));
+  A('#hel3-smile', [{ opacity: 1 }, { opacity: 0 }], s.start, 0.1);
+  A('#hel3-worry', [{ opacity: 0 }, { opacity: 1 }], s.start, 0.1);
+  A('#hel3-armL', [{ transform: 'rotate(0)' }, { transform: 'rotate(140deg)' }], s.start + 0.3, 0.4);
+  A('#hel3-armR', [{ transform: 'rotate(0)' }, { transform: 'rotate(-140deg)' }], s.start + 0.3, 0.4);
+}
+// --- 4. Magia
+{
+  const s = SC.magia, d = s.dur;
+  const raise = s.vo + 0.1, trail = s.vo + d * 0.28, pop = s.vo + d * 0.55;
+  A('#hel4-armR', [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-150deg)' }, { offset: .7, transform: 'rotate(-170deg)' }, { transform: 'rotate(-155deg)' }], raise, 1.2);
+  A('#trilha', [{ strokeDashoffset: 100 }, { strokeDashoffset: 0 }], trail, pop - trail, { easing: 'ease-in-out' });
+  A('#trilha', [{ opacity: 1 }, { opacity: 0 }], pop + 0.4, 0.6, { fill: 'forwards' });
+  $$('[id^="tr"]').forEach((el, i) => { if (!/^tr\d+$/.test(el.id)) return; A(el, [{ transform: 'scale(0)', opacity: 0 }, { offset: .3, transform: 'scale(1.3)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], trail + i * ((pop - trail) / 8), 0.9); });
+  A('#aura', [{ transform: 'scale(.3)', opacity: 0 }, { offset: .2, opacity: 1 }, { transform: 'scale(4)', opacity: 0 }], pop - 0.05, 0.9, { easing: 'ease-out' });
+  A('#fone4', [{ transform: 'scale(0) rotate(-20deg)', opacity: 0 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }], pop, 0.7, { easing: BACK });
+  loop('#fone4', [{ transform: 'translateY(0) rotate(0deg)' }, { transform: 'translateY(-16px) rotate(1deg)' }, { transform: 'translateY(0) rotate(0deg)' }], pop + 0.8, 2, s.end + 1);
+  twinkleAll('m4s', s.start, s.end + 1);
+  A('#flash', [{ opacity: 0 }, { opacity: 0.7 }, { opacity: 0 }], pop - 0.05, 0.45, { fill: 'forwards' });
+}
+// --- 5. Editor
+{
+  const s = SC.editor, d = s.dur;
+  const sel = s.vo + d * 0.16, f1 = s.vo + d * 0.27, f2 = s.vo + d * 0.37, f3 = s.vo + d * 0.47, pronto = s.vo + d * 0.62;
+  A('#fone5', [{ transform: 'translateY(1200px) rotate(10deg)' }, { transform: 'translateY(0) rotate(0deg)' }], s.start + 0.1, 0.7, { easing: BACK });
+  A('#tema1', [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1.08)' }], sel, 0.45, { easing: BACK });
+  A('#check5', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], sel + 0.1, 0.35, { easing: BACK });
+  A('#tema0', [{ opacity: 1 }, { opacity: 0.45 }], sel, 0.3);
+  A('#tema2', [{ opacity: 1 }, { opacity: 0.45 }], sel, 0.3);
+  [['#f1-mask', f1], ['#f2-mask', f2], ['#f3-mask', f3]].forEach(([m, t]) => A(m, [{ width: '0px' }, { width: '340px' }], t, 0.6, { easing: 'steps(12)' }));
+  A('#passoA', [{ opacity: 1 }, { opacity: 0 }], pronto - 0.2, 0.3);
+  A('#passoC', [{ opacity: 0, transform: 'scale(.92)' }, { opacity: 1, transform: 'scale(1)' }], pronto - 0.1, 0.5, { easing: BACK });
+  wave('#hel5b-armR', pronto + 0.3, s.end + 1);
+  A('#link5', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], pronto + 0.8, 0.4, { easing: BACK });
+  twinkleAll('c5s', pronto, s.end + 1);
+  twinkleAll('e5', s.start, s.end + 1);
+}
+// --- 6. Reino
+{
+  const s = SC.reino, d = s.dur;
+  [0, 1, 2].forEach((i) => A(`#ave${i}`, [{ transform: 'translateX(-200px) translateY(0)' }, { offset: .5, transform: 'translateX(560px) translateY(-60px)' }, { transform: 'translateX(1300px) translateY(0)' }], s.start + 0.2 + i * 0.5, 2.6, { easing: 'linear' }));
+  for (let i = 0; i < 5; i++) loop(`#nv6${i}`, [{ transform: 'translateX(0)' }, { transform: 'translateX(60px)' }, { transform: 'translateX(0)' }], s.start, 5 + i, s.end + 1);
+  const marks = [0.12, 0.32, 0.52, 0.72].map((f) => s.vo + d * f);
+  A('#cont6', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], s.start + 0.3, 0.4, { easing: BACK });
+  marks.forEach((t, i) => {
+    A(`#cf${i}`, [{ transform: 'scale(0) translateY(40px)', opacity: 0 }, { transform: 'scale(1) translateY(0)', opacity: 1 }], t, 0.45, { easing: BACK });
+    A(`#c6n${i + 1}`, [{ opacity: 0 }, { opacity: 1 }], t, 0.05);
+    if (i < 3) A(`#c6n${i + 1}`, [{ opacity: 1 }, { opacity: 0 }], marks[i + 1], 0.05, { fill: 'forwards' });
+    A('#cont6', [{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], t, 0.35, { easing: BACK, fill: 'forwards' });
+  });
+}
+// --- 7. Baile
+{
+  const s = SC.baile;
+  loop('#lustre', [{ transform: 'rotate(-2deg)' }, { transform: 'rotate(2deg)' }, { transform: 'rotate(-2deg)' }], s.start, 2.4, s.end + 1);
+  for (let i = 0; i < 3; i++) for (let k = 0; k < 3; k++) loop(`#fw${i}${k}`, [{ transform: 'scale(0)', opacity: 1 }, { offset: .7, transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.2)', opacity: 0 }], s.start + (i * 3 + k) * 0.22, 1.1, s.end + 1, 'ease-out');
+  loop('#hel7', [{ transform: 'rotate(-5deg) scaleX(1)' }, { transform: 'rotate(5deg) scaleX(1.06)' }, { transform: 'rotate(-5deg) scaleX(1)' }], s.start, 0.9, s.end + 1);
+  wave('#hel7-armR', s.start + 0.3, s.end + 1, 0.45);
+  [['#f7u', 0], ['#f7c', 0.15], ['#f7d', 0.3]].forEach(([sel, off]) => { bounce(sel, s.start + 0.2 + off, s.end + 1, 44, 0.55); wave(`${sel}-armR`, s.start + 0.3 + off, s.end + 1, 0.45); });
+  $$('.conf7').forEach((el, i) => A(el, [{ transform: 'translateY(0) rotate(0deg)' }, { transform: `translateY(${2100 + (i % 5) * 100}px) rotate(${(i % 2 ? 1 : -1) * 360}deg)` }], s.start + (i % 10) * 0.12, 3 + (i % 4) * 0.4, { easing: 'linear' }));
+  twinkleAll('lus', s.start, s.end + 1);
+}
+// --- 8. Final
+{
+  const s = SC.final;
+  $$('[id^="let"]').forEach((el, i) => A(el, [{ transform: 'translateY(-700px) scale(.6)', opacity: 0 }, { offset: .7, transform: 'translateY(18px) scale(1.05)', opacity: 1 }, { transform: 'translateY(0) scale(1)', opacity: 1 }], s.start + 0.3 + i * 0.06, 0.7, { easing: 'ease-out' }));
+  A('#slogan8', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], s.vo + 0.9, 0.45, { easing: BACK });
+  A('#preco8', [{ transform: 'scale(0) rotate(-10deg)' }, { transform: 'scale(1) rotate(0deg)' }], s.vo + 1.7, 0.55, { easing: BACK });
+  A('#cta8', [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], s.vo + 3.6, 0.45, { easing: BACK });
+  loop('#cta8', [{ transform: 'scale(1)' }, { transform: 'scale(1.07)' }, { transform: 'scale(1)' }], s.vo + 4.1, 0.9, s.end + 1);
+  wave('#hel8-armR', s.start + 0.6, s.end + 1);
+  wave('#f8c-armR', s.start + 0.9, s.end + 1, 0.45);
+  bounce('#f8c', s.start + 0.8, s.end + 1, 22, 0.7);
+  twinkleAll('f8s', s.start, s.end + 1);
+}
+
+window.seek = (t) => { for (const a of anims) a.currentTime = t * 1000; };
+window.READY = document.fonts.ready.then(() => Promise.all([document.fonts.load('700 40px Fredoka'), document.fonts.load('60px "Great Vibes"')])).then(() => true);
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "titulo": "Festa no Link — O baile da princesinha Helena",
+  "formato": "Vertical 1080x1920 (Reels, Stories, TikTok)",
+  "voz": { "voice_id": "cgSgspJ2msm6clMCkdW9", "nome": "Jessica (ElevenLabs, multilíngue)", "modelo": "eleven_multilingual_v2" },
+  "cenas": [
+    { "id": "era", "fala": "Era uma vez... a princesinha Helena, que ia fazer seis anos!", "legenda": "Era uma vez... a princesinha Helena" },
+    { "id": "sonho", "fala": "Ela sonhava com um baile de princesa, com todos os amigos do reino.", "legenda": "Ela sonhava com um baile de princesa" },
+    { "id": "problema", "fala": "Mas como chamar todo mundo a tempo?", "legenda": "Mas como chamar todo mundo a tempo?" },
+    { "id": "magia", "fala": "Com um toque de varinha... surgiu o Festa no Link!", "legenda": "Com um toque de varinha..." },
+    { "id": "editor", "fala": "Ela escolheu o tema, colocou a data e o lugar... e o convite ficou pronto, cheio de brilho.", "legenda": "Tema, data e lugar. Cheio de brilho!" },
+    { "id": "reino", "fala": "Mandou para todo o reino, e os convidados foram confirmando!", "legenda": "E o reino inteiro confirmou!" },
+    { "id": "baile", "fala": "E o baile... foi mágico!", "legenda": "E o baile foi mágico!" },
+    { "id": "final", "fala": "Festa no Link. Convites encantados a partir de vinte e nove e noventa. Faça o seu!", "legenda": "" }
+  ],
+  "efeitos": {
+    "magia": { "texto": "magical fairy wand sparkle sweep, glittering chimes rising", "duracao": 2.0 },
+    "brilho": { "texto": "soft twinkling sparkle chime, fairy dust", "duracao": 1.2 },
+    "fanfarra": { "texto": "short cheerful royal fanfare, bright trumpets, kids cartoon", "duracao": 2.0 },
+    "pop": { "texto": "single cute bubbly pop, soft notification pop", "duracao": 0.5 },
+    "relogio": { "texto": "ticking clock speeding up, cartoon", "duracao": 2.0 },
+    "passaros": { "texto": "cheerful cartoon birds chirping and wings fluttering", "duracao": 2.0 },
+    "festa": { "texto": "magical ball celebration, fireworks pops and kids cheering ooh", "duracao": 2.5 },
+    "whoosh": { "texto": "soft magical whoosh transition with shimmer", "duracao": 0.8 }
+  }
+}

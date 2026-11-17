@@ -278,8 +278,7 @@ scenes.push(['confirmacoes', `
   `, -5)}
   <g transform="translate(870 420)"><g id="contador" class="tb" style="transform-origin:center">
     ${pc(`<circle r="135" fill="${C.yellow}"/>`)}
-    ${[1, 2, 3, 4].map((n) => `<text id="cnt${n}" x="0" y="34" text-anchor="middle" font-size="120" font-weight="700" fill="${INK}" opacity="0">${n}</text>`).join('')}
-    <text x="0" y="86" text-anchor="middle" font-size="30" font-weight="700" fill="${INK}">confirmados</text>
+    ${[1, 2, 3, 4].map((n) => `<g id="cnt${n}" opacity="0"><text x="0" y="34" text-anchor="middle" font-size="120" font-weight="700" fill="${INK}">${n}</text><text x="0" y="86" text-anchor="middle" font-size="30" font-weight="700" fill="${INK}">${n === 1 ? "confirmado" : "confirmados"}</text></g>`).join("")}
   </g></g>
   ${caption('cap-confirmacoes', 'E os amigos foram confirmando!', 1490)}
 `]);
